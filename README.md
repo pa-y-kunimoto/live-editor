@@ -22,6 +22,8 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture doc
 
 ## 🚀 Getting Started
 
+**Quick Start:** See [docs/QUICKSTART.md](./docs/QUICKSTART.md) for a quick start guide.
+
 ### Prerequisites
 
 - Node.js >= 18.0.0
