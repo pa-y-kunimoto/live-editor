@@ -19,8 +19,11 @@ export interface FormData {
  * Validates a form field
  */
 export function validateField(field: FormField): boolean {
-  if (field.required && !field.value) {
-    return false;
+  if (field.required) {
+    // Check for null, undefined, or empty string (but not 0 which is valid)
+    if (field.value === null || field.value === undefined || field.value === '') {
+      return false;
+    }
   }
   return true;
 }
