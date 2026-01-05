@@ -26,7 +26,7 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture doc
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 24.0.0
 - pnpm >= 8.0.0
 
 ### Installation

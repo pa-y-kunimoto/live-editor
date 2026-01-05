@@ -6,7 +6,7 @@ Thank you for your interest in contributing to live-editor! This guide will help
 
 ### Prerequisites
 
-- **Node.js** >= 18.0.0
+- **Node.js** >= 24.0.0
 - **pnpm** >= 8.0.0
 - **Git**
 
