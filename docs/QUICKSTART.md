@@ -6,7 +6,7 @@ Get up and running with the live-editor monorepo in minutes.
 
 Ensure you have the following installed:
 
-- **Node.js** >= 24.0.0 ([Download](https://nodejs.org/))
+- **Node.js** >= 22.0.0 ([Download](https://nodejs.org/))
 - **pnpm** >= 8.0.0
 
 ## Installation
