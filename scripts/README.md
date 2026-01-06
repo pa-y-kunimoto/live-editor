@@ -10,6 +10,9 @@ Records a demo video of the Live Editor application using Playwright.
 
 - The development server must be running on `http://localhost:3000`
 - Playwright browsers must be installed (`pnpm exec playwright install chromium`)
+- ffmpeg must be installed for GIF conversion:
+  - Ubuntu/Debian: `sudo apt-get install ffmpeg`
+  - macOS: `brew install ffmpeg`
 
 ### Usage
 
@@ -25,7 +28,9 @@ Records a demo video of the Live Editor application using Playwright.
    node scripts/record-demo.js
    ```
 
-3. The video will be saved to `docs/assets/` directory as a `.webm` file.
+3. The recording will be saved to `docs/assets/` directory as both:
+   - `demo.webm` - Original WebM video
+   - `demo.gif` - Converted GIF for GitHub compatibility
 
 #### Custom URL
 
@@ -50,6 +55,7 @@ The script:
    - Checklists
 4. Scrolls through the content
 5. Saves the recording as a WebM video (1280x720)
+6. Converts the WebM to GIF format for GitHub README compatibility
 
 ### Customization
 

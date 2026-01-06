@@ -4,7 +4,7 @@ A block-based Markdown editor with real-time preview, built with Nuxt.js and Vue
 
 ## Demo
 
-<video src="./docs/assets/demo.webm" controls width="100%" />
+![Live Editor Demo](./docs/assets/demo.gif)
 
 ## Overview
 
