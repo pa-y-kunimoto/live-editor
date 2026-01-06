@@ -9,6 +9,7 @@ import {
   useFormatToolbar,
   useKeyboardHandler,
   type Block
+
 } from '../composables'
 
 const props = defineProps<{
@@ -996,6 +997,7 @@ function insertTable() {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -1007,6 +1009,7 @@ function insertTable() {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
