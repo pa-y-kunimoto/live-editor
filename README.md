@@ -1,28 +1,26 @@
-# live-editor
+# Live Editor
 
-A monorepo for a prototype live editor with real-time form rendering capabilities.
+A block-based Markdown editor with real-time preview, built with Nuxt.js and Vue 3.
 
-## 📋 Overview
+## Overview
 
-This project demonstrates a monorepo architecture using pnpm workspaces, featuring:
+Live Editor is a modern, block-based markdown editor that provides an intuitive WYSIWYG-like editing experience while maintaining full markdown compatibility. Each piece of content is treated as an independent "block" that can be edited, moved, and styled individually.
 
-- **Real-time form editing** with live validation
-- **Modular architecture** with shared core utilities
-- **TypeScript** for type safety across all packages
-- **Automated CI/CD** with GitHub Actions
+### Key Features
 
-## 🏗️ Architecture
+- **Block-based Editing** - Content is organized into discrete blocks (headings, paragraphs, lists, code, etc.)
+- **Real-time Preview** - See rendered markdown as you type
+- **Syntax Highlighting** - Code blocks with language-specific highlighting
+- **Link Previews** - OGP metadata display for URLs
+- **Drag & Drop** - Reorder blocks by dragging
+- **Undo/Redo** - Full history support with cursor position restoration
+- **Keyboard Shortcuts** - Efficient navigation and formatting
+- **Checklists** - Interactive task lists with checkbox toggling
+- **Table Generation** - Quick table creation with `/table` command
 
-This monorepo contains the following packages:
+## Getting Started
 
-- **[@live-editor/core](./packages/core)** - Core utilities, types, and validation logic
-- **[@live-editor/web](./packages/web)** - Web application for live form editing
-
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture documentation.
-
-## 🚀 Getting Started
-
-**Quick Start:** See [docs/QUICKSTART.md](./docs/QUICKSTART.md) for a quick start guide.
+See [docs/QUICKSTART.md](./docs/QUICKSTART.md) for a quick start guide.
 
 ### Prerequisites
 
@@ -32,86 +30,38 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture doc
 ### Installation
 
 ```bash
-# Install pnpm if you haven't already
-npm install -g pnpm
-
-# Install dependencies
 pnpm install
-
-# Build all packages
-pnpm build
 ```
 
 ### Development
 
 ```bash
-# Run all packages in development mode
+# Start the development server
 pnpm dev
-
-# Build all packages
-pnpm build
 
 # Run tests
 pnpm test
 
 # Run linter
 pnpm lint
-
-# Format code
-pnpm format
 ```
 
-## 📦 Packages
+## Documentation
 
-### Core (`@live-editor/core`)
+- [Quick Start](./docs/QUICKSTART.md) - Getting started guide
+- [Architecture](./docs/ARCHITECTURE.md) - System architecture and composables
+- [Glossary](./docs/GLOSSARY.md) - Domain terminology (ubiquitous language)
+- [Contributing](./CONTRIBUTING.md) - Development workflow and guidelines
 
-Core utilities and types for form management:
+## Tech Stack
 
-```typescript
-import { FormField, validateForm } from '@live-editor/core';
-```
+- **Framework:** Nuxt.js 4 / Vue 3
+- **Language:** TypeScript
+- **Markdown:** marked
+- **Syntax Highlighting:** highlight.js
+- **Testing:** Vitest + @vue/test-utils
+- **Package Manager:** pnpm (monorepo)
 
-### Web (`@live-editor/web`)
-
-Web application for live form editing:
-
-```typescript
-import { LiveEditor } from '@live-editor/web';
-
-const editor = new LiveEditor();
-editor.addField({ id: 'name', type: 'text', label: 'Name', value: '' });
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests in a specific package
-pnpm --filter @live-editor/core test
-```
-
-## 📝 Contributing
-
-Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our development process and how to submit pull requests.
-
-## 🔧 CI/CD
-
-This project uses GitHub Actions for continuous integration:
-
-- **Linting** - ESLint and Prettier checks
-- **Building** - TypeScript compilation for all packages
-- **Testing** - Automated test execution
-- **Validation** - Ensures all checks pass before merging
-
-See [.github/workflows/ci.yml](./.github/workflows/ci.yml) for the full CI configuration.
-
-## 📚 Documentation
-
-- [Architecture Guide](./docs/ARCHITECTURE.md) - Detailed system architecture
-- [Contributing Guide](./CONTRIBUTING.md) - Development workflow and guidelines
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

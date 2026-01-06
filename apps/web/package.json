@@ -1,0 +1,34 @@
+{
+  "name": "@live-editor/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "prepare": "nuxt prepare",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "marked": "^15.0.12",
+    "marked-highlight": "^2.2.1",
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.26"
+  },
+  "devDependencies": {
+    "@oxc-minify/binding-darwin-arm64": "^0.106.0",
+    "@oxc-parser/binding-darwin-arm64": "^0.106.0",
+    "@oxc-transform/binding-darwin-arm64": "^0.106.0",
+    "@types/node": "^22.19.3",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.0.11",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
+  }
+}
