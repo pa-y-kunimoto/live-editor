@@ -1,8 +1,18 @@
 const { chromium } = require('@playwright/test');
 const path = require('path');
 
+// Configuration
+const DEMO_URL = process.env.DEMO_URL || 'http://localhost:3000';
+const TIMING = {
+  INITIAL_WAIT: 1000,
+  SHORT_PAUSE: 300,
+  MEDIUM_PAUSE: 500,
+  LONG_PAUSE: 1000,
+};
+
 async function recordDemo() {
   console.log('Starting demo recording...');
+  console.log(`Using URL: ${DEMO_URL}`);
   
   const browser = await chromium.launch({
     headless: true,
@@ -21,40 +31,40 @@ async function recordDemo() {
   try {
     // Navigate to the application
     console.log('Navigating to application...');
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
+    await page.goto(DEMO_URL, { waitUntil: 'networkidle' });
     
     // Wait for the editor to be ready
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(TIMING.INITIAL_WAIT);
 
     // Type a heading
     console.log('Typing heading...');
     await page.keyboard.type('# Live Editor Demo');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type a paragraph
     console.log('Typing paragraph...');
     await page.keyboard.type('This is a block-based Markdown editor with real-time preview.');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type another heading
     console.log('Typing subheading...');
     await page.keyboard.type('## Features');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type a list
     console.log('Typing list...');
     await page.keyboard.type('- Real-time preview');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(TIMING.SHORT_PAUSE);
     await page.keyboard.type('- Syntax highlighting');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(TIMING.SHORT_PAUSE);
     await page.keyboard.type('- Drag & drop blocks');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type code block
     console.log('Typing code block...');
@@ -64,7 +74,7 @@ async function recordDemo() {
     await page.keyboard.press('Enter');
     await page.keyboard.type('```');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type a checklist
     console.log('Typing checklist...');
@@ -74,15 +84,15 @@ async function recordDemo() {
     await page.keyboard.press('Enter');
     await page.keyboard.type('- [ ] Update README');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(TIMING.LONG_PAUSE);
 
     // Interact with the preview (scroll to show the content)
     console.log('Scrolling to show content...');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(TIMING.LONG_PAUSE);
     
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(TIMING.LONG_PAUSE);
 
     console.log('Demo recording completed!');
   } catch (error) {

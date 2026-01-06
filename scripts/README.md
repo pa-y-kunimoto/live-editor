@@ -27,6 +27,16 @@ Records a demo video of the Live Editor application using Playwright.
 
 3. The video will be saved to `docs/assets/` directory as a `.webm` file.
 
+#### Custom URL
+
+You can specify a custom URL for the demo recording:
+
+```bash
+DEMO_URL=http://localhost:4000 pnpm record-demo
+# or
+DEMO_URL=http://localhost:4000 node scripts/record-demo.js
+```
+
 ### What it does
 
 The script:
@@ -46,5 +56,6 @@ The script:
 You can modify the `record-demo.js` script to:
 - Change the viewport size
 - Add more interactions
-- Adjust timing between actions
+- Adjust timing between actions (see `TIMING` configuration at the top of the script)
 - Change the output format or location
+- Use a different URL via the `DEMO_URL` environment variable
