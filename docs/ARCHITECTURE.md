@@ -2,7 +2,7 @@
 
 ## Overview
 
-The live-editor project is designed as a monorepo using pnpm workspaces, enabling efficient code sharing and unified dependency management across multiple packages.
+The live-editor project is designed as a monorepo using pnpm workspaces, enabling efficient code sharing and unified dependency management across multiple packages. The main application is a block-based Markdown editor built with Nuxt.js and Vue 3.
 
 ## Monorepo Structure
 
@@ -11,6 +11,26 @@ live-editor/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml              # GitHub Actions CI pipeline
+├── apps/
+│   └── web/                    # Nuxt.js web application
+│       ├── components/         # Vue components
+│       │   └── MarkdownEditor.vue
+│       ├── composables/        # Vue composables (business logic)
+│       │   ├── useMarkdownBlocks.ts
+│       │   ├── useMarkdownRenderer.ts
+│       │   ├── useBlockEditor.ts
+│       │   ├── useLinkPreview.ts
+│       │   ├── useEditorHistory.ts
+│       │   ├── useFormatToolbar.ts
+│       │   ├── useKeyboardHandler.ts
+│       │   ├── useTableGenerator.ts
+│       │   ├── useHighlight.ts
+│       │   └── useMarkdownDocument.ts
+│       ├── pages/              # Nuxt pages
+│       ├── server/             # Server API routes
+│       │   └── api/
+│       │       └── fetch-title.ts  # OGP metadata fetcher
+│       └── public/             # Static assets
 ├── packages/
 │   ├── core/                   # Core utilities and types
 │   │   ├── src/
@@ -18,24 +38,142 @@ live-editor/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   └── README.md
-│   └── web/                    # Web application
+│   └── web/                    # Web package
 │       ├── src/
 │       │   └── index.ts       # LiveEditor class
 │       ├── package.json
 │       ├── tsconfig.json
 │       └── README.md
 ├── docs/
-│   └── ARCHITECTURE.md        # This file
+│   ├── ARCHITECTURE.md        # This file
+│   ├── GLOSSARY.md            # Ubiquitous language definitions
+│   └── QUICKSTART.md          # Quick start guide
 ├── package.json               # Root package configuration
 ├── pnpm-workspace.yaml        # Workspace definition
 ├── .eslintrc.js              # ESLint configuration
 ├── .prettierrc.js            # Prettier configuration
-├── tsconfig.json             # TypeScript base config (if needed)
+├── tsconfig.json             # TypeScript base config
 ├── CONTRIBUTING.md           # Development guidelines
 └── README.md                 # Project overview
 ```
 
 ## Package Architecture
+
+### apps/web (Nuxt.js Application)
+
+**Purpose**: Block-based Markdown editor with real-time preview
+
+The main application is built with Nuxt.js 4 and follows Vue 3's Composition API patterns. Business logic is separated into composables for maintainability and testability.
+
+#### Composables Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MarkdownEditor.vue                            │
+│                    (Main Component)                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│useMarkdownBlocks│   │useBlockEditor   │   │useMarkdownDocument│
+│ - Parse content │   │ - Edit state    │   │ - Load/save     │
+│ - Block types   │   │ - Drag & drop   │   │ - Clipboard     │
+└───────────────┘   └─────────────────┘   └─────────────────┘
+        │                     │
+        ▼                     ▼
+┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│useMarkdownRenderer│ │useKeyboardHandler│ │useEditorHistory │
+│ - HTML output  │   │ - Shortcuts     │   │ - Undo/redo     │
+│ - Link preview │   │ - Navigation    │   │ - State tracking│
+└───────────────┘   └─────────────────┘   └─────────────────┘
+        │                     │
+        ▼                     ▼
+┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│useLinkPreview │   │useFormatToolbar │   │useTableGenerator│
+│ - OGP fetch   │   │ - Bold, italic  │   │ - /table command│
+│ - Preview card│   │ - Headings      │   │ - Table markup  │
+└───────────────┘   └─────────────────┘   └─────────────────┘
+        │
+        ▼
+┌───────────────┐
+│useHighlight   │
+│ - Syntax color│
+└───────────────┘
+```
+
+#### Composable Details
+
+| Composable | Purpose | Key Exports |
+|------------|---------|-------------|
+| `useMarkdownBlocks` | Parses markdown into blocks | `blocks`, `getBlockType()`, `parseCodeBlock()`, `parseChecklist()`, `getSectionBlockIds()` |
+| `useMarkdownRenderer` | Renders blocks to HTML | `renderBlock()`, `getRenderedBlock()`, `linkPreviews`, `loadingUrls` |
+| `useBlockEditor` | Manages editing state | `editingBlockIndex`, `startEditing()`, `updateBlock()`, `handleDragStart()`, `handleDrop()` |
+| `useLinkPreview` | Fetches OGP metadata | `processUrlBlock()`, `fetchPreview()` |
+| `useEditorHistory` | Undo/redo functionality | `history`, `undo()`, `redo()`, `isUndoRedo` |
+| `useFormatToolbar` | Text formatting | `applyFormat()` with types: bold, italic, code, link, h1-h3, lists |
+| `useKeyboardHandler` | Keyboard events | `handleKeyDown()` for Enter, Backspace, Tab, arrows |
+| `useTableGenerator` | Table creation | `parseTableCommand()`, `generateTableMarkdown()` |
+| `useHighlight` | Syntax highlighting | `highlightCode()` using highlight.js |
+| `useMarkdownDocument` | Document operations | `markdownContent`, `loadDefaultContent()`, `copyToClipboard()` |
+
+#### Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      User Input                                  │
+│              (typing, clicking, keyboard)                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    useBlockEditor                                │
+│              Handle user interactions                            │
+│         Update content, manage editing state                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   useMarkdownBlocks                              │
+│              Parse content into blocks                           │
+│         Determine block types (heading, code, list, etc.)        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  useMarkdownRenderer                             │
+│                Render blocks to HTML                             │
+│      Apply syntax highlighting, create preview cards             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Vue Template                                  │
+│              Display rendered content                            │
+│         Interactive editing with textarea overlays               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Server API
+
+The application includes a server-side API for OGP metadata fetching:
+
+**`/api/fetch-title`** - Fetches OGP metadata for a given URL
+
+```typescript
+// Request
+GET /api/fetch-title?url=https://example.com
+
+// Response
+{
+  title: "Example Domain",
+  description: "This domain is for use in examples...",
+  image: "https://example.com/og-image.png",
+  siteName: "Example",
+  favicon: "https://example.com/favicon.ico"
+}
+```
 
 ### @live-editor/core
 
@@ -61,7 +199,7 @@ export function validateForm(formData: FormData): boolean
 
 ### @live-editor/web
 
-**Purpose**: Web application for live form editing
+**Purpose**: Web package for form editing utilities
 
 **Key Components**:
 
@@ -76,38 +214,42 @@ export function validateForm(formData: FormData): boolean
 
 - `@live-editor/core` (workspace dependency)
 
-**Real-time Features**:
-
-- Automatic timestamp updates on changes
-- Instant validation feedback
-- Immutable data access
-
 ## Design Principles
 
 ### 1. Separation of Concerns
 
-- **Core** contains pure business logic without UI concerns
-- **Web** handles application-specific logic and state management
-- Clear boundaries between packages
+- **Composables** contain business logic without UI concerns
+- **Components** handle presentation and user interactions
+- **Server API** handles external data fetching
+- Clear boundaries between layers
 
 ### 2. Type Safety
 
 - TypeScript used throughout
 - Strict mode enabled
-- Comprehensive type definitions in core package
+- Comprehensive type definitions
+- Interfaces for all domain objects (Block, LinkPreview, etc.)
 
 ### 3. Immutability
 
-- `getFormData()` returns a copy, not a reference
-- Prevents unintended mutations
-- Easier to reason about state changes
+- Vue reactive refs for state management
+- Content updates through emit rather than direct mutation
+- History tracking for undo/redo support
 
 ### 4. Single Responsibility
 
-Each package has a clear, focused purpose:
+Each composable has a clear, focused purpose:
 
-- Core: Data structures and validation
-- Web: Application logic and state management
+- `useMarkdownBlocks`: Parsing only
+- `useMarkdownRenderer`: Rendering only
+- `useBlockEditor`: User interaction only
+- etc.
+
+### 5. Testability
+
+- Business logic in composables can be unit tested independently
+- Integration tests verify composable interactions
+- 160+ tests with Vitest
 
 ## Data Flow
 
@@ -209,23 +351,29 @@ Compiles TypeScript to JavaScript with:
 
 ### Current State
 
-- Basic test infrastructure in place
-- Placeholder tests return exit code 0
-- Ready for test implementation
+The project has comprehensive test coverage with 160+ tests using Vitest.
 
-### Recommended Approach
+### Test Structure
 
-1. **Unit Tests** - Test individual functions in core package
-2. **Integration Tests** - Test package interactions
-3. **Type Tests** - Verify TypeScript types are correct
+```
+apps/web/
+├── components/__tests__/
+│   └── MarkdownEditor.integration.test.ts  # Component tests
+└── composables/__tests__/
+    ├── useMarkdownBlocks.test.ts           # 32 tests
+    ├── useMarkdownRenderer.test.ts         # 23 tests
+    ├── useEditorHistory.test.ts            # 13 tests
+    ├── useFormatToolbar.test.ts            # 27 tests
+    ├── useTableGenerator.test.ts           # 19 tests
+    ├── useMarkdownDocument.test.ts         # 21 tests
+    └── integration.test.ts                 # 10 tests
+```
 
-### Testing Tools (Future)
+### Testing Tools
 
-Consider adding:
-
-- Jest or Vitest for unit testing
-- Testing Library for component testing
-- Coverage reporting
+- **Vitest** - Fast unit testing framework
+- **@vue/test-utils** - Vue component testing utilities
+- **happy-dom** - Lightweight DOM implementation for tests
 
 ## CI/CD Pipeline
 
