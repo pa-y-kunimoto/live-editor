@@ -42,7 +42,6 @@ node_modules/
 jspm_packages/
 
 # pnpm
-pnpm-lock.yaml
 .pnpm-debug.log
 
 # Snowpack dependency directory (https://snowpack.dev/)
