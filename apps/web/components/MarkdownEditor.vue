@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { marked } from 'marked'
-import { ref, computed, watch, nextTick } from 'vue'
-import { useHighlight } from '../composables/useHighlight';
+import { ref, computed, nextTick } from 'vue'
+import {
+  useMarkdownBlocks,
+  useMarkdownRenderer,
+  useLinkPreview,
+  useEditorHistory,
+  useBlockEditor,
+  useFormatToolbar,
+  useKeyboardHandler,
+  type Block
+} from '../composables'
 
 const props = defineProps<{
   modelValue: string
@@ -11,641 +19,112 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-interface Block {
-  id: string
-  content: string
+// Composables
+const content = computed(() => props.modelValue)
+const { blocks, getBlockType, getSectionBlockIds } = useMarkdownBlocks(content)
+
+const {
+  linkPreviews,
+  loadingUrls,
+  renderBlock,
+  getRenderedBlock,
+  watchBlocks
+} = useMarkdownRenderer()
+
+const {
+  processUrlBlock
+} = useLinkPreview(linkPreviews, loadingUrls)
+
+const {
+  editingBlockIndex,
+  editingBlockId,
+  hoveredBlockId,
+  blockRefs,
+  pendingFocus,
+  ignoreBlur,
+  draggedBlockIndex,
+  dragOverBlockIndex,
+  copiedBlockId,
+  hoveredCopyBlockId,
+  getTextarea,
+  adjustTextareaHeight,
+  startEditingByIndex,
+  startEditing,
+  stopEditing,
+  updateBlock,
+  handleInput,
+  handleBlur: baseHandleBlur,
+  handlePaste,
+  handleDragStart,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  handleDragEnd,
+  copySection: baseCopySection
+} = useBlockEditor(blocks, emit)
+
+// 履歴管理
+const {
+  undo: baseUndo,
+  redo: baseRedo
+} = useEditorHistory(
+  content,
+  editingBlockIndex,
+  getTextarea
+)
+
+// undo/redo のラッパー
+function undo() {
+  baseUndo(emit, startEditingByIndex)
 }
 
-interface LinkPreview {
-  url: string
-  title: string | null
-  description: string | null
-  image: string | null
-  siteName: string | null
-  favicon: string | null
+function redo() {
+  baseRedo(emit, startEditingByIndex)
 }
 
-const { highlightCode } = useHighlight()
-
-// 編集中のブロックインデックス（IDではなくインデックスで管理）
-const editingBlockIndex = ref<number | null>(null)
-const hoveredBlockId = ref<string | null>(null)
-const blockRefs = ref<Map<string, HTMLTextAreaElement>>(new Map())
-const highlightedBlocks = ref<Map<string, string>>(new Map())
-const linkPreviews = ref<Map<string, LinkPreview>>(new Map())
-const loadingUrls = ref<Set<string>>(new Set())
-const toolbarRef = ref<HTMLElement | null>(null)
+// テーブル生成
 const showTableInput = ref(false)
 const tableRows = ref(3)
 const tableCols = ref(3)
 
-// ドラッグアンドドロップ用の状態
-const draggedBlockIndex = ref<number | null>(null)
-const dragOverBlockIndex = ref<number | null>(null)
+// フォーマットツールバー
+const { applyFormat } = useFormatToolbar(
+  () => editingBlockId.value,
+  (blockId) => blockRefs.value.get(blockId) ?? null,
+  updateBlock,
+  adjustTextareaHeight
+)
 
-// コピーしたブロックIDを記録
-const copiedBlockId = ref<string | null>(null)
-// コピーボタンをホバー中のブロックID
-const hoveredCopyBlockId = ref<string | null>(null)
-
-// Undo/Redo用の履歴管理
-interface HistoryState {
-  content: string
-  editingBlockIndex: number | null
-  cursorPos: number | null
-}
-const history = ref<HistoryState[]>([{
-  content: props.modelValue,
-  editingBlockIndex: null,
-  cursorPos: null
-}])
-const historyIndex = ref(0)
-const isUndoRedo = ref(false)
-
-// 編集中のブロックIDを取得するcomputed
-const editingBlockId = computed(() => {
-  if (editingBlockIndex.value === null) return null
-  const block = blocks.value[editingBlockIndex.value]
-  return block ? block.id : null
-})
-
-const blocks = computed<Block[]>(() => {
-  const lines = props.modelValue.split('\n')
-  const result: Block[] = []
-  let currentBlock: string[] = []
-  let blockId = 0
-
-  const pushBlock = () => {
-    if (currentBlock.length > 0) {
-      result.push({
-        id: `block-${blockId++}`,
-        content: currentBlock.join('\n')
-      })
-      currentBlock = []
-    }
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    const trimmed = line.trim()
-
-    // 見出し
-    if (trimmed.match(/^#{1,6}\s/)) {
-      pushBlock()
-      result.push({
-        id: `block-${blockId++}`,
-        content: line
-      })
-      continue
-    }
-
-    // リスト項目（ネストを含む）- 連続するリスト項目を1つのブロックにまとめる
-    const isListItem = trimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || trimmed.match(/^\d+\.(\s|$)/)
-    const isIndentedListItem = line.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || line.match(/^\s+\d+\.(\s|$)/)
-
-    if (isListItem || isIndentedListItem) {
-      pushBlock()
-      const listLines = [line]
-      // 次の行もリスト項目（インデントされている可能性も含む）なら追加
-      while (i + 1 < lines.length) {
-        const nextLine = lines[i + 1]
-        const nextTrimmed = nextLine.trim()
-        // 空行の場合は終了
-        if (nextTrimmed === '') {
-          break
-        }
-        // リスト項目、チェックリスト、番号付きリスト、またはインデントされたリスト項目の場合は継続
-        const nextIsListItem = nextTrimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || nextTrimmed.match(/^\d+\.(\s|$)/)
-        const nextIsIndentedListItem = nextLine.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || nextLine.match(/^\s+\d+\.(\s|$)/)
-
-        if (nextIsListItem || nextIsIndentedListItem) {
-          i++
-          listLines.push(nextLine)
-        } else {
-          break
-        }
-      }
-      result.push({
-        id: `block-${blockId++}`,
-        content: listLines.join('\n')
-      })
-      continue
-    }
-
-    // 引用（ネストを含む）- 連続する引用行を1つのブロックにまとめる
-    const isQuote = trimmed.match(/^>+\s?/)
-    const isIndentedQuote = line.match(/^\s+>+\s?/)
-
-    if (isQuote || isIndentedQuote) {
-      pushBlock()
-      const quoteLines = [line]
-      // 次の行も引用（インデントされている可能性も含む）なら追加
-      while (i + 1 < lines.length) {
-        const nextLine = lines[i + 1]
-        const nextTrimmed = nextLine.trim()
-        // 空行の場合は終了
-        if (nextTrimmed === '') {
-          break
-        }
-        // 引用行またはインデントされた引用行の場合は継続
-        const nextIsQuote = nextTrimmed.match(/^>+\s?/)
-        const nextIsIndentedQuote = nextLine.match(/^\s+>+\s?/)
-
-        if (nextIsQuote || nextIsIndentedQuote) {
-          i++
-          quoteLines.push(nextLine)
-        } else {
-          break
-        }
-      }
-      result.push({
-        id: `block-${blockId++}`,
-        content: quoteLines.join('\n')
-      })
-      continue
-    }
-
-    // 水平線
-    if (trimmed.match(/^[-*_]{3,}$/)) {
-      pushBlock()
-      result.push({
-        id: `block-${blockId++}`,
-        content: line
-      })
-      continue
-    }
-
-    if (trimmed.startsWith('```')) {
-      pushBlock()
-      const codeBlock = [line]
-      i++
-      while (i < lines.length && !lines[i].trim().startsWith('```')) {
-        codeBlock.push(lines[i])
-        i++
-      }
-      if (i < lines.length) {
-        codeBlock.push(lines[i])
-      }
-      result.push({
-        id: `block-${blockId++}`,
-        content: codeBlock.join('\n')
-      })
-      continue
-    }
-
-    if (trimmed === '') {
-      pushBlock()
-      result.push({
-        id: `block-${blockId++}`,
-        content: ''
-      })
-      continue
-    }
-
-    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-      const tableLines = [line]
-      while (i + 1 < lines.length && lines[i + 1].trim().startsWith('|')) {
-        i++
-        tableLines.push(lines[i])
-      }
-      pushBlock()
-      result.push({
-        id: `block-${blockId++}`,
-        content: tableLines.join('\n')
-      })
-      continue
-    }
-
-    currentBlock.push(line)
-  }
-
-  pushBlock()
-
-  if (result.length === 0) {
-    result.push({ id: 'block-0', content: '' })
-  }
-
-  return result
-})
-
-// コピーボタンをホバー中のセクションに含まれるブロックIDを計算
-const sectionBlockIds = computed<Set<string>>(() => {
-  if (!hoveredCopyBlockId.value) return new Set()
-
-  const blockIndex = blocks.value.findIndex(b => b.id === hoveredCopyBlockId.value)
-  if (blockIndex === -1) return new Set()
-
-  const currentBlock = blocks.value[blockIndex]
-  const currentContent = currentBlock.content.trim()
-
-  // 見出しレベルを取得
-  const headingMatch = currentContent.match(/^(#{1,6})\s/)
-  if (!headingMatch) return new Set()
-
-  const currentLevel = headingMatch[1].length
-  const ids = new Set<string>([currentBlock.id])
-
-  // 次の同レベルまたはそれ以上の見出しが現れるまでのブロックを集める
-  for (let i = blockIndex + 1; i < blocks.value.length; i++) {
-    const nextBlock = blocks.value[i]
-    const nextContent = nextBlock.content.trim()
-    const nextHeadingMatch = nextContent.match(/^(#{1,6})\s/)
-
-    // 次の見出しが同レベルまたはそれ以上の場合は終了
-    if (nextHeadingMatch && nextHeadingMatch[1].length <= currentLevel) {
-      break
-    }
-
-    ids.add(nextBlock.id)
-  }
-
-  return ids
-})
-
-function getBlockType(content: string): string {
-  const trimmed = content.trim()
-  if (trimmed.startsWith('# ')) return 'heading-1'
-  if (trimmed.startsWith('## ')) return 'heading-2'
-  if (trimmed.startsWith('### ')) return 'heading-3'
-  if (trimmed.startsWith('```')) return 'code-block'
-  if (trimmed.match(/^[-*+]\s\[[ x]\]\s/)) return 'checklist'
-  if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) return 'bullet-list'
-  if (trimmed.match(/^\d+\.\s/)) return 'numbered-list'
-  if (trimmed.startsWith('> ')) return 'blockquote'
-  if (trimmed.startsWith('|')) return 'table'
-  if (trimmed === '') return 'empty'
-  return 'paragraph'
-}
-
-function parseCodeBlock(content: string): { lang: string; code: string } | null {
-  const match = content.match(/^```(\w*)\n?([\s\S]*?)```$/m)
-  if (match) {
-    return {
-      lang: match[1] || 'text',
-      code: match[2].replace(/\n$/, '')
-    }
-  }
-  return null
-}
-
-function parseChecklist(content: string): { checked: boolean; text: string; indent: string } | null {
-  const match = content.match(/^(\s*)([-*+])\s\[([ x])\]\s(.*)$/)
-  if (match) {
-    return {
-      indent: match[1],
-      checked: match[3] === 'x',
-      text: match[4]
-    }
-  }
-  return null
-}
-
-function renderLoadingPreview(url: string): string {
-  const hostname = new globalThis.URL(url).hostname
-
-  return `<div class="link-preview-card link-preview-loading">
-    <div class="link-preview-content">
-      <div class="link-preview-title-skeleton"></div>
-      <div class="link-preview-description-skeleton"></div>
-      <div class="link-preview-site">
-        <div class="link-preview-favicon-skeleton"></div>
-        <span>${hostname}</span>
-      </div>
-    </div>
-  </div>`
-}
-
-function renderLinkPreview(url: string, preview: LinkPreview): string {
-  const escapeHtml = (str: string) => str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-
-  const title = preview.title ? escapeHtml(preview.title) : url
-  const description = preview.description ? escapeHtml(preview.description) : ''
-  const siteName = preview.siteName ? escapeHtml(preview.siteName) : new globalThis.URL(url).hostname
-
-  let html = `<a href="${escapeHtml(url)}" class="link-preview-card" target="_blank" rel="noopener noreferrer">`
-
-  html += `<div class="link-preview-content">`
-  html += `<div class="link-preview-title">${title}</div>`
-
-  if (description) {
-    html += `<div class="link-preview-description">${description}</div>`
-  }
-
-  html += `<div class="link-preview-site">`
-  if (preview.favicon) {
-    html += `<img src="${escapeHtml(preview.favicon)}" alt="" class="link-preview-favicon" />`
-  }
-  html += `<span>${siteName}</span>`
-  html += `</div>`
-  html += `</div></a>`
-
-  return html
-}
-
-function renderBlock(block: Block): void {
-  const content = block.content
-  if (!content.trim()) {
-    highlightedBlocks.value.set(block.id, '<p class="empty-line"><br></p>')
-    return
-  }
-
-  const codeInfo = parseCodeBlock(content)
-  if (codeInfo) {
-    const highlighted = highlightCode(codeInfo.code, codeInfo.lang)
-    const langLabel = codeInfo.lang ? `<div class="code-lang-label">${codeInfo.lang}</div>` : ''
-    highlightedBlocks.value.set(block.id, `<div class="code-block-wrapper">${langLabel}<pre class="hljs"><code>${highlighted}</code></pre></div>`)
-    return
-  }
-
-  // チェックリストのレンダリング（複数行対応）
-  const lines = content.split('\n')
-  const isChecklist = lines.every(line => {
-    const trimmed = line.trim()
-    return trimmed === '' || trimmed.match(/^[-*+]\s\[[ x]\]\s/) || line.match(/^\s+[-*+]\s\[[ x]\]\s/)
-  }) && lines.some(line => line.match(/[-*+]\s\[[ x]\]\s/))
-
-  if (isChecklist) {
-    const checklistHtml = lines.map((line, lineIndex) => {
-      const trimmed = line.trim()
-      if (trimmed === '') return ''
-
-      const match = line.match(/^(\s*)([-*+])\s\[([ x])\]\s(.*)$/)
-      if (match) {
-        const indent = match[1]
-        const checked = match[3] === 'x'
-        const text = match[4]
-        const checkedClass = checked ? 'checked' : ''
-        const checkedAttr = checked ? 'checked' : ''
-        const indentStyle = indent ? `style="margin-left: ${indent.length * 8}px"` : ''
-        const textHtml = marked.parseInline(text, { async: false }) as string
-        return `<div class="checklist-item ${checkedClass}" ${indentStyle} data-block-id="${block.id}" data-line-index="${lineIndex}">
-          <input type="checkbox" ${checkedAttr} class="checklist-checkbox" data-line-index="${lineIndex}" />
-          <span class="checklist-text">${textHtml}</span>
-        </div>`
-      }
-      return ''
-    }).filter(html => html !== '').join('')
-
-    if (checklistHtml) {
-      highlightedBlocks.value.set(block.id, checklistHtml)
-      return
-    }
-  }
-
-  // 通常のmarkdownとしてレンダリング
-  let html = marked.parse(content, { async: false }) as string
-
-  // URLリンクのみのブロックはリッチプレビューカードも追加表示
-  const linkOnlyMatch = content.trim().match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/)
-  if (linkOnlyMatch) {
-    const url = linkOnlyMatch[2]
-    // ローディング中の場合はスケルトンを表示
-    if (loadingUrls.value.has(url)) {
-      html += renderLoadingPreview(url)
-    } else {
-      const preview = linkPreviews.value.get(url)
-      if (preview && preview.description) {
-        html += renderLinkPreview(url, preview)
-      }
-    }
-  }
-
-  highlightedBlocks.value.set(block.id, html)
-}
-
-function getRenderedBlock(block: Block): string {
-  return highlightedBlocks.value.get(block.id) || '<p class="empty-line"><br></p>'
-}
-
-watch(
+// キーボードハンドラー
+const { handleKeydown } = useKeyboardHandler({
   blocks,
-  (newBlocks) => {
-    for (const block of newBlocks) {
-      renderBlock(block)
-    }
-  },
-  { immediate: true, deep: true }
-)
+  editingBlockIndex,
+  editingBlockId,
+  blockRefs,
+  pendingFocus,
+  ignoreBlur,
+  emit,
+  updateBlock,
+  adjustTextareaHeight,
+  startEditingByIndex,
+  stopEditing,
+  undo,
+  redo,
+  processUrlBlock: (url: string) => processUrlBlock(url, blocks, updateBlock, renderBlock)
+})
 
-// modelValueの変更を監視して履歴に追加
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    if (isUndoRedo.value) {
-      isUndoRedo.value = false
-      return
-    }
+// セクションブロックIDを計算
+const sectionBlockIds = computed(() => getSectionBlockIds(hoveredCopyBlockId.value))
 
-    // 現在の履歴位置より後ろの履歴を削除
-    if (historyIndex.value < history.value.length - 1) {
-      history.value = history.value.slice(0, historyIndex.value + 1)
-    }
-
-    // カーソル位置を取得
-    let cursorPos: number | null = null
-    if (editingBlockId.value) {
-      const textarea = blockRefs.value.get(editingBlockId.value)
-      if (textarea) {
-        cursorPos = textarea.selectionStart
-      }
-    }
-
-    // 新しい値を履歴に追加
-    history.value.push({
-      content: newValue,
-      editingBlockIndex: editingBlockIndex.value,
-      cursorPos
-    })
-    historyIndex.value = history.value.length - 1
-
-    // 履歴が100個を超えたら古いものを削除
-    if (history.value.length > 100) {
-      history.value.shift()
-      historyIndex.value--
-    }
-  }
-)
-
-// フォーカス待ちの状態を保持（インデックスベースに変更）
-const pendingFocus = ref<{ blockIndex: number; cursorPos: number } | null>(null)
-// blurを無視するフラグ
-const ignoreBlur = ref(false)
-
-function startEditingByIndex(blockIndex: number, cursorPos?: number) {
-  ignoreBlur.value = true
-  editingBlockIndex.value = blockIndex
-
-  if (cursorPos !== undefined) {
-    pendingFocus.value = { blockIndex, cursorPos }
-  }
-
-  nextTick(() => {
-    const currentBlockId = editingBlockId.value
-    if (!currentBlockId) return
-
-    const textarea = blockRefs.value.get(currentBlockId)
-    if (textarea) {
-      textarea.focus()
-      adjustTextareaHeight(textarea)
-      if (pendingFocus.value) {
-        textarea.setSelectionRange(pendingFocus.value.cursorPos, pendingFocus.value.cursorPos)
-        pendingFocus.value = null
-      }
-    }
-    // blurフラグをリセット（少し遅延を入れてblurイベントが発火するのを待つ）
-    setTimeout(() => {
-      ignoreBlur.value = false
-    }, 50)
-  })
+// コピーセクション
+function copySection(blockId: string) {
+  baseCopySection(blockId, getSectionBlockIds)
 }
 
-function startEditing(blockId: string, cursorPos?: number) {
-  const blockIndex = blocks.value.findIndex((b: Block) => b.id === blockId)
-  if (blockIndex !== -1) {
-    startEditingByIndex(blockIndex, cursorPos)
-  }
-}
+// ブロックの監視と再レンダリング
+watchBlocks(blocks)
 
-function stopEditing() {
-  if (ignoreBlur.value) {
-    return
-  }
-  // handleBlurで処理するため、ここでは何もしない
-}
-
-function updateBlock(blockId: string, newContent: string) {
-  const blockIndex = blocks.value.findIndex(b => b.id === blockId)
-  if (blockIndex === -1) return
-
-  const newBlocks = blocks.value.map((b, i) =>
-    i === blockIndex ? { ...b, content: newContent } : b
-  )
-
-  emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-}
-
-function handleInput(event: Event, blockId: string) {
-  const textarea = event.target as HTMLTextAreaElement
-  updateBlock(blockId, textarea.value)
-  adjustTextareaHeight(textarea)
-}
-
-async function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
-  try {
-    const response = await fetch(`/api/fetch-title?url=${encodeURIComponent(url)}`)
-    if (response.ok) {
-      const data = await response.json()
-      return {
-        url,
-        title: data.title || null,
-        description: data.description || null,
-        image: data.image || null,
-        siteName: data.siteName || null,
-        favicon: data.favicon || null
-      }
-    }
-  } catch {
-    // フェッチ失敗時はnullを返す
-  }
-  return null
-}
-
-function handlePaste(event: ClipboardEvent, blockId: string) {
-  const pastedText = event.clipboardData?.getData('text')
-  if (!pastedText) return
-
-  // URLパターンをチェック（テキストが選択されている場合のみハイパーリンク化）
-  const urlPattern = /^https?:\/\/[^\s]+$/
-  const trimmedUrl = pastedText.trim()
-  if (urlPattern.test(trimmedUrl)) {
-    const textarea = event.target as HTMLTextAreaElement
-    const cursorPos = textarea.selectionStart
-    const selectionEnd = textarea.selectionEnd
-    const content = textarea.value
-    const selectedText = content.slice(cursorPos, selectionEnd)
-
-    // テキストが選択されている場合のみ、即座にハイパーリンク化
-    if (selectedText) {
-      event.preventDefault()
-      const markdownLink = `[${selectedText}](${trimmedUrl})`
-      const newContent = content.slice(0, cursorPos) + markdownLink + content.slice(selectionEnd)
-      updateBlock(blockId, newContent)
-      nextTick(() => {
-        const newCursorPos = cursorPos + markdownLink.length
-        textarea.setSelectionRange(newCursorPos, newCursorPos)
-      })
-    }
-    // 選択テキストがない場合は通常のペースト（URLのまま）
-  }
-}
-
-// URLをハイパーリンク化してOGP情報を取得（非同期で実行）
-async function processUrlBlock(url: string) {
-  // markdownリンク形式のパターン
-  const linkPattern = `[${url}](${url})`
-
-  // ローディング状態を設定
-  loadingUrls.value.add(url)
-
-  // nextTickでDOMの更新を待ってからレンダリング
-  await nextTick()
-
-  // ローディングスケルトンを表示するため再レンダリング（厳密にマッチ）
-  for (const b of blocks.value) {
-    if (b.content.trim() === linkPattern) {
-      renderBlock(b)
-      break
-    }
-  }
-
-  // OGP情報を非同期で取得
-  const preview = await fetchLinkPreview(url)
-
-  // ローディング状態を解除
-  loadingUrls.value.delete(url)
-
-  if (preview) {
-    linkPreviews.value.set(url, preview)
-
-    // タイトルが取得できた場合、リンクテキストを更新
-    if (preview.title) {
-      for (const b of blocks.value) {
-        // 厳密にURLのみのリンクブロックかチェック
-        if (b.content.trim() === linkPattern) {
-          updateBlock(b.id, `[${preview.title}](${url})`)
-          break
-        }
-      }
-    }
-
-    // nextTickでDOMの更新を待つ
-    await nextTick()
-
-    // プレビューカードを再レンダリング（URLを含むリンクブロック）
-    for (const b of blocks.value) {
-      const linkMatch = b.content.trim().match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/)
-      if (linkMatch && linkMatch[2] === url) {
-        renderBlock(b)
-        break
-      }
-    }
-  } else {
-    // フェッチ失敗時もローディング解除後に再レンダリング
-    await nextTick()
-    for (const b of blocks.value) {
-      if (b.content.trim() === linkPattern) {
-        renderBlock(b)
-        break
-      }
-    }
-  }
-}
-
-// フォーカスが外れた時にURLをハイパーリンク化
+// handleBlurをURL処理対応に拡張
 async function handleBlur(blockId: string) {
   if (ignoreBlur.value) {
     return
@@ -653,743 +132,26 @@ async function handleBlur(blockId: string) {
 
   const block = blocks.value.find((b: Block) => b.id === blockId)
   if (block) {
-    // 生URLのパターンをチェック（行全体がURLの場合）
     const urlPattern = /^(https?:\/\/[^\s]+)$/
     const trimmedContent = block.content.trim()
     const urlMatch = trimmedContent.match(urlPattern)
 
-    if (urlMatch) {
+    if (urlMatch && urlMatch[1]) {
       const url = urlMatch[1]
-
-      // まずURLをmarkdownリンク形式に変換
       updateBlock(blockId, `[${url}](${url})`)
-
-      // 編集モードを終了（プレビュー表示に切り替え）
       editingBlockIndex.value = null
-
-      // 非同期でOGP情報を取得（awaitしない）
-      processUrlBlock(url)
+      processUrlBlock(url, blocks, updateBlock, renderBlock)
       return
     }
   }
 
-  editingBlockIndex.value = null
-}
-
-function handleKeydown(event: KeyboardEvent, blockId: string, blockIndex: number) {
-  const textarea = event.target as HTMLTextAreaElement
-
-  // Cmd+Z (Mac) または Ctrl+Z (Windows/Linux) でUndo
-  if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
-    event.preventDefault()
-    undo()
-    return
-  }
-
-  // Cmd+Shift+Z (Mac) または Ctrl+Shift+Z (Windows/Linux) でRedo
-  if ((event.metaKey || event.ctrlKey) && event.key === 'z' && event.shiftKey) {
-    event.preventDefault()
-    redo()
-    return
-  }
-
-  // Cmd+Y (Windows/Linux) でもRedo
-  if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
-    event.preventDefault()
-    redo()
-    return
-  }
-
-  if (event.key === 'Escape') {
-    stopEditing()
-    return
-  }
-
-  // スペースキーで /table x y パターンをテーブルに変換
-  if (event.key === ' ') {
-    const cursorPos = textarea.selectionStart
-    const content = textarea.value
-    const beforeCursor = content.slice(0, cursorPos)
-
-    const tableMatch = beforeCursor.match(/^\/table\s+(\d+)\s+(\d+)$/)
-    if (tableMatch) {
-      event.preventDefault()
-      const rows = parseInt(tableMatch[1])
-      const cols = parseInt(tableMatch[2])
-
-      if (rows > 0 && rows <= 20 && cols > 0 && cols <= 10) {
-        // テーブルのマークダウンを生成
-        let tableMarkdown = ''
-
-        // ヘッダー行
-        tableMarkdown += '| ' + Array(cols).fill('Header').map((h, i) => `${h}${i + 1}`).join(' | ') + ' |\n'
-
-        // 区切り行
-        tableMarkdown += '| ' + Array(cols).fill('---').join(' | ') + ' |\n'
-
-        // データ行
-        for (let i = 0; i < rows; i++) {
-          tableMarkdown += '| ' + Array(cols).fill('').join(' | ') + ' |\n'
-        }
-
-        const afterCursor = content.slice(cursorPos)
-        updateBlock(blockId, tableMarkdown.trim() + afterCursor)
-
-        nextTick(() => {
-          const textarea = blockRefs.value.get(blockId)
-          if (textarea) {
-            adjustTextareaHeight(textarea)
-            // ヘッダー行の最初のセルにカーソルを移動
-            const firstCellPos = 2
-            textarea.setSelectionRange(firstCellPos, firstCellPos + 7)
-          }
-        })
-      }
-      return
-    }
-  }
-
-  if (event.key === 'Enter' && !event.shiftKey) {
-    // IME変換中は何もしない
-    if (event.isComposing) {
-      return
-    }
-
-    const cursorPos = textarea.selectionStart
-    const content = textarea.value
-
-    // /table x y パターンを検出してテーブルに変換
-    const tableMatch = content.match(/^\/table\s+(\d+)\s+(\d+)$/)
-    if (tableMatch) {
-      event.preventDefault()
-      const rows = parseInt(tableMatch[1])
-      const cols = parseInt(tableMatch[2])
-
-      if (rows > 0 && rows <= 20 && cols > 0 && cols <= 10) {
-        // テーブルのマークダウンを生成
-        let tableMarkdown = ''
-
-        // ヘッダー行
-        tableMarkdown += '| ' + Array(cols).fill('Header').map((h, i) => `${h}${i + 1}`).join(' | ') + ' |\n'
-
-        // 区切り行
-        tableMarkdown += '| ' + Array(cols).fill('---').join(' | ') + ' |\n'
-
-        // データ行
-        for (let i = 0; i < rows; i++) {
-          tableMarkdown += '| ' + Array(cols).fill('').join(' | ') + ' |\n'
-        }
-
-        updateBlock(blockId, tableMarkdown.trim())
-
-        nextTick(() => {
-          const textarea = blockRefs.value.get(blockId)
-          if (textarea) {
-            adjustTextareaHeight(textarea)
-            // ヘッダー行の最初のセルにカーソルを移動
-            const firstCellPos = 2
-            textarea.setSelectionRange(firstCellPos, firstCellPos + 7)
-          }
-        })
-      }
-      return
-    }
-
-    // コードブロック内では通常の改行を許可し、インデントを維持
-    if (content.trim().startsWith('```')) {
-      event.preventDefault()
-
-      // 現在行の開始位置を見つける
-      const beforeCursor = content.slice(0, cursorPos)
-      const lastNewlineIndex = beforeCursor.lastIndexOf('\n')
-      const currentLineStart = lastNewlineIndex + 1
-      const currentLine = content.slice(currentLineStart, cursorPos)
-
-      // 現在行のインデント（先頭の空白文字）を取得
-      const indentMatch = currentLine.match(/^(\s*)/)
-      const indent = indentMatch ? indentMatch[1] : ''
-
-      // 改行とインデントを挿入
-      const newContent = content.slice(0, cursorPos) + '\n' + indent + content.slice(cursorPos)
-      updateBlock(blockId, newContent)
-
-      nextTick(() => {
-        const textarea = blockRefs.value.get(blockId)
-        if (textarea) {
-          const newCursorPos = cursorPos + 1 + indent.length
-          textarea.setSelectionRange(newCursorPos, newCursorPos)
-          adjustTextareaHeight(textarea)
-        }
-      })
-      return
-    }
-
-    event.preventDefault()
-
-    // blurイベントを無視するフラグを設定（Enter処理中のblur発火を防ぐ）
-    ignoreBlur.value = true
-
-    const beforeCursor = content.slice(0, cursorPos)
-    const afterCursor = content.slice(cursorPos)
-
-    // 現在のカーソル位置の行を特定
-    const lines = content.split('\n')
-    let currentLineIndex = 0
-    let charCount = 0
-    for (let i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length >= cursorPos) {
-        currentLineIndex = i
-        break
-      }
-      charCount += lines[i].length + 1 // +1 for newline
-    }
-    const currentLine = lines[currentLineIndex]
-    const currentLineTrimmed = currentLine.trim()
-
-    // 現在の行の開始位置を計算
-    let lineStartPos = 0
-    for (let i = 0; i < currentLineIndex; i++) {
-      lineStartPos += lines[i].length + 1
-    }
-
-    // 箇条書きの自動補完
-    // 現在の行のカーソル以降のテキストのみを取得
-    const currentLineStartPos = lineStartPos
-    const currentLineEndPos = currentLineIndex < lines.length - 1
-      ? lineStartPos + lines[currentLineIndex].length
-      : content.length
-    // afterCurrentLineには次の行以降が含まれる（改行文字も含む）
-    const afterCurrentLine = currentLineIndex < lines.length - 1 ? content.slice(currentLineEndPos) : ''
-    const currentLineAfterCursor = content.slice(cursorPos, currentLineEndPos)
-
-    let nextContent = afterCursor
-    let nextCursorPos = 0
-    let bulletMatch = null
-    let numberedMatch = null
-
-    // チェックリスト（- [ ] または - [x]）
-    const checklistMatch = currentLineTrimmed.match(/^([-*+])\s\[[ x]\]\s/)
-    if (checklistMatch) {
-      // 空のチェックリストの場合はリストブロックから抜けて新しいブロックを作成
-      if (currentLineTrimmed.match(/^[-*+]\s\[[ x]\]\s*$/)) {
-        event.preventDefault()
-        const newLines = [...lines]
-        newLines.splice(currentLineIndex, 1) // 空のリスト項目を削除
-        const currentBlockContent = newLines.join('\n').trim()
-
-        const newBlocks = [...blocks.value]
-        if (currentBlockContent) {
-          // リストブロックに内容が残っている場合
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: currentBlockContent }
-          newBlocks.splice(blockIndex + 1, 0, { id: `block-${Date.now()}`, content: '' })
-        } else {
-          // リストブロックが空になった場合は空のブロックに置き換え
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: '' }
-        }
-
-        emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-        // 新しいブロックにフォーカス
-        const nextBlockIndex = currentBlockContent ? blockIndex + 1 : blockIndex
-        nextTick(() => {
-          startEditingByIndex(nextBlockIndex, 0)
-          ignoreBlur.value = false
-        })
-        return
-      }
-      // インデントを保持
-      const indentMatch = currentLine.match(/^(\s*)/)
-      const indent = indentMatch ? indentMatch[1] : ''
-      nextContent = `${indent}${checklistMatch[1]} [ ] ${currentLineAfterCursor}`
-      nextCursorPos = indent.length + 6
-    }
-    // 箇条書き（- または * または +）
-    else {
-      bulletMatch = currentLineTrimmed.match(/^([-*+])\s/)
-      if (bulletMatch) {
-        // 空の箇条書きの場合はリストブロックから抜けて新しいブロックを作成
-        if (currentLineTrimmed === bulletMatch[0].trim()) {
-          event.preventDefault()
-          const newLines = [...lines]
-          newLines.splice(currentLineIndex, 1) // 空のリスト項目を削除
-          const currentBlockContent = newLines.join('\n').trim()
-
-          const newBlocks = [...blocks.value]
-          if (currentBlockContent) {
-            // リストブロックに内容が残っている場合
-            newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: currentBlockContent }
-            newBlocks.splice(blockIndex + 1, 0, { id: `block-${Date.now()}`, content: '' })
-          } else {
-            // リストブロックが空になった場合は空のブロックに置き換え
-            newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: '' }
-          }
-
-          emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-          // 新しいブロックにフォーカス
-          const nextBlockIndex = currentBlockContent ? blockIndex + 1 : blockIndex
-          nextTick(() => {
-            startEditingByIndex(nextBlockIndex, 0)
-            ignoreBlur.value = false
-          })
-          return
-        }
-        // インデントを保持
-        const indentMatch = currentLine.match(/^(\s*)/)
-        const indent = indentMatch ? indentMatch[1] : ''
-        nextContent = `${indent}${bulletMatch[1]} ${currentLineAfterCursor}`
-        nextCursorPos = indent.length + 2
-      }
-    }
-
-    // 番号付きリスト（1. 2. など）
-    numberedMatch = currentLineTrimmed.match(/^(\d+)\.\s/)
-    if (numberedMatch) {
-      // 空の番号付きリストの場合はリストブロックから抜けて新しいブロックを作成
-      if (currentLineTrimmed === numberedMatch[0].trim()) {
-        event.preventDefault()
-        const newLines = [...lines]
-        newLines.splice(currentLineIndex, 1) // 空のリスト項目を削除
-        const currentBlockContent = newLines.join('\n').trim()
-
-        const newBlocks = [...blocks.value]
-        if (currentBlockContent) {
-          // リストブロックに内容が残っている場合
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: currentBlockContent }
-          newBlocks.splice(blockIndex + 1, 0, { id: `block-${Date.now()}`, content: '' })
-        } else {
-          // リストブロックが空になった場合は空のブロックに置き換え
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: '' }
-        }
-
-        emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-        // 新しいブロックにフォーカス
-        const nextBlockIndex = currentBlockContent ? blockIndex + 1 : blockIndex
-        nextTick(() => {
-          startEditingByIndex(nextBlockIndex, 0)
-          ignoreBlur.value = false
-        })
-        return
-      }
-      const nextNumber = parseInt(numberedMatch[1]) + 1
-      // インデントを保持
-      const indentMatch = currentLine.match(/^(\s*)/)
-      const indent = indentMatch ? indentMatch[1] : ''
-      nextContent = `${indent}${nextNumber}. ${currentLineAfterCursor}`
-      nextCursorPos = indent.length + `${nextNumber}. `.length
-    }
-
-    // 引用（> または >> など）
-    const quoteMatch = currentLineTrimmed.match(/^(>+)\s?/)
-    if (quoteMatch) {
-      // 空の引用の場合は引用ブロックから抜けて新しいブロックを作成
-      if (currentLineTrimmed === quoteMatch[0].trim() || currentLineTrimmed === quoteMatch[1]) {
-        event.preventDefault()
-        const newLines = [...lines]
-        newLines.splice(currentLineIndex, 1) // 空の引用行を削除
-        const currentBlockContent = newLines.join('\n').trim()
-
-        const newBlocks = [...blocks.value]
-        if (currentBlockContent) {
-          // 引用ブロックに内容が残っている場合
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: currentBlockContent }
-          newBlocks.splice(blockIndex + 1, 0, { id: `block-${Date.now()}`, content: '' })
-        } else {
-          // 引用ブロックが空になった場合は空のブロックに置き換え
-          newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: '' }
-        }
-
-        emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-        // 新しいブロックにフォーカス
-        const nextBlockIndex = currentBlockContent ? blockIndex + 1 : blockIndex
-        nextTick(() => {
-          startEditingByIndex(nextBlockIndex, 0)
-          ignoreBlur.value = false
-        })
-        return
-      }
-      // インデントと引用マーカーを保持
-      const indentMatch = currentLine.match(/^(\s*)/)
-      const indent = indentMatch ? indentMatch[1] : ''
-      nextContent = `${indent}${quoteMatch[1]} ${currentLineAfterCursor}`
-      nextCursorPos = indent.length + quoteMatch[1].length + 1
-    }
-
-    // URLのみのブロックの場合、ハイパーリンク化してOGP取得
-    const urlPattern = /^(https?:\/\/[^\s]+)$/
-    const urlMatch = currentLineTrimmed.match(urlPattern)
-    if (urlMatch) {
-      const url = urlMatch[1]
-
-      // URLをmarkdownリンク形式に変換した現在のブロック + 新しい空ブロック
-      const newBlocks = [...blocks.value]
-      newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: `[${url}](${url})` }
-      newBlocks.splice(blockIndex + 1, 0, {
-        id: `block-${Date.now()}`,
-        content: ''
-      })
-
-      emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-      // 次のブロックに移動
-      const nextBlockIndex = blockIndex + 1
-
-      // 直接インデックスベースでフォーカスを設定
-      pendingFocus.value = { blockIndex: nextBlockIndex, cursorPos: 0 }
-
-      // インデックスベースで編集状態を設定
-      editingBlockIndex.value = nextBlockIndex
-
-      // requestAnimationFrameで確実にDOM更新後にフォーカス
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          const nextBlockId = editingBlockId.value
-          if (nextBlockId) {
-            const textarea = blockRefs.value.get(nextBlockId)
-            if (textarea) {
-              textarea.focus()
-              adjustTextareaHeight(textarea)
-              if (pendingFocus.value) {
-                textarea.setSelectionRange(pendingFocus.value.cursorPos, pendingFocus.value.cursorPos)
-                pendingFocus.value = null
-              }
-            }
-            setTimeout(() => {
-              ignoreBlur.value = false
-            }, 50)
-          }
-        })
-      })
-
-      // 非同期でOGP情報を取得
-      processUrlBlock(url)
-      return
-    }
-
-    // リスト項目または引用の場合は、同じブロック内に新しい行を追加
-    if (checklistMatch || bulletMatch || numberedMatch || quoteMatch) {
-      // afterCurrentLineはすでに改行文字で始まっているため、そのまま連結
-      const newContent = beforeCursor + '\n' + nextContent + afterCurrentLine
-      updateBlock(blockId, newContent)
-
-      // 即座に ignoreBlur をリセット
-      setTimeout(() => {
-        ignoreBlur.value = false
-      }, 0)
-
-      nextTick(() => {
-        const textarea = blockRefs.value.get(blockId)
-        if (textarea) {
-          const newCursorPos = beforeCursor.length + 1 + nextCursorPos
-          textarea.focus()
-          textarea.setSelectionRange(newCursorPos, newCursorPos)
-          adjustTextareaHeight(textarea)
-        }
-      })
-      return
-    }
-
-    // リスト以外の場合は新しいブロックを作成
-    const newBlocks = [...blocks.value]
-    newBlocks[blockIndex] = { ...newBlocks[blockIndex], content: beforeCursor }
-    newBlocks.splice(blockIndex + 1, 0, {
-      id: `block-${Date.now()}`,
-      content: nextContent
-    })
-
-    emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-    // 次のブロックのインデックスを保存
-    const nextBlockIndex = blockIndex + 1
-
-    // 直接インデックスベースでフォーカスを設定
-    pendingFocus.value = { blockIndex: nextBlockIndex, cursorPos: nextCursorPos }
-
-    // インデックスベースで編集状態を設定
-    editingBlockIndex.value = nextBlockIndex
-
-    // requestAnimationFrameで確実にDOM更新後にフォーカス
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const nextBlockId = editingBlockId.value
-        if (nextBlockId) {
-          const textarea = blockRefs.value.get(nextBlockId)
-          if (textarea) {
-            textarea.focus()
-            adjustTextareaHeight(textarea)
-            if (pendingFocus.value) {
-              textarea.setSelectionRange(pendingFocus.value.cursorPos, pendingFocus.value.cursorPos)
-              pendingFocus.value = null
-            }
-          }
-          setTimeout(() => {
-            ignoreBlur.value = false
-          }, 50)
-        }
-      })
-    })
-    return
-  }
-
-  if (event.key === 'Backspace' && textarea.selectionStart === 0 && textarea.selectionEnd === 0 && blockIndex > 0) {
-    event.preventDefault()
-    ignoreBlur.value = true
-    const currentContent = textarea.value
-    const prevBlockIndex = blockIndex - 1
-
-    const newBlocks = [...blocks.value]
-    const prevContent = newBlocks[prevBlockIndex].content
-    const cursorPosition = prevContent.length
-
-    // 前のブロックに現在のコンテンツを結合
-    newBlocks[prevBlockIndex] = { ...newBlocks[prevBlockIndex], content: prevContent + currentContent }
-    // 現在のブロックを削除
-    newBlocks.splice(blockIndex, 1)
-
-    emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-    // インデックスベースで前のブロックに移動
-    startEditingByIndex(prevBlockIndex, cursorPosition)
-    return
-  }
-
-  if (event.key === 'ArrowUp' && textarea.selectionStart === 0 && blockIndex > 0) {
-    event.preventDefault()
-    ignoreBlur.value = true
-    startEditingByIndex(blockIndex - 1)
-    return
-  }
-
-  if (event.key === 'ArrowDown' && textarea.selectionEnd === textarea.value.length && blockIndex < blocks.value.length - 1) {
-    event.preventDefault()
-    ignoreBlur.value = true
-    startEditingByIndex(blockIndex + 1)
-    return
-  }
-
-  // Tab キーでインデント操作
-  if (event.key === 'Tab') {
-    const content = textarea.value
-    const trimmed = content.trim()
-
-    // コードブロック内の場合
-    if (trimmed.startsWith('```')) {
-      event.preventDefault()
-      const cursorPos = textarea.selectionStart
-
-      // コードブロックの言語を検出
-      const langMatch = trimmed.match(/^```(\w+)/)
-      const lang = langMatch ? langMatch[1].toLowerCase() : ''
-
-      // 言語ごとの標準インデント幅を設定
-      let indentSize = 2 // デフォルト
-      if (['python', 'java', 'c', 'cpp', 'csharp', 'go', 'php', 'rust', 'swift'].includes(lang)) {
-        indentSize = 4
-      } else if (lang === 'go') {
-        // Goはタブ文字を使用するが、ここではスペースで統一
-        indentSize = 4
-      }
-
-      const indent = ' '.repeat(indentSize)
-
-      // 現在行の開始位置を見つける
-      const beforeCursor = content.slice(0, cursorPos)
-      const lastNewlineIndex = beforeCursor.lastIndexOf('\n')
-      const currentLineStart = lastNewlineIndex + 1
-      const currentLineEnd = content.indexOf('\n', cursorPos)
-      const lineEnd = currentLineEnd === -1 ? content.length : currentLineEnd
-      const currentLine = content.slice(currentLineStart, lineEnd)
-
-      if (event.shiftKey) {
-        // Shift+Tab: インデント解除
-        const currentIndentMatch = currentLine.match(/^(\s*)/)
-        const currentIndent = currentIndentMatch ? currentIndentMatch[1] : ''
-
-        if (currentIndent.length >= indentSize) {
-          // indentSize分のスペースを削除
-          const newLine = currentLine.slice(indentSize)
-          const newContent = content.slice(0, currentLineStart) + newLine + content.slice(lineEnd)
-          updateBlock(blockId, newContent)
-          nextTick(() => {
-            const newCursorPos = Math.max(currentLineStart, cursorPos - indentSize)
-            textarea.setSelectionRange(newCursorPos, newCursorPos)
-          })
-        } else if (currentIndent.length > 0) {
-          // 残りの空白を削除
-          const newLine = currentLine.slice(currentIndent.length)
-          const newContent = content.slice(0, currentLineStart) + newLine + content.slice(lineEnd)
-          updateBlock(blockId, newContent)
-          nextTick(() => {
-            const newCursorPos = Math.max(currentLineStart, cursorPos - currentIndent.length)
-            textarea.setSelectionRange(newCursorPos, newCursorPos)
-          })
-        }
-      } else {
-        // Tab: インデント追加
-        const beforeLine = content.slice(0, cursorPos)
-        const afterLine = content.slice(cursorPos)
-        const newContent = beforeLine + indent + afterLine
-        updateBlock(blockId, newContent)
-        nextTick(() => {
-          textarea.setSelectionRange(cursorPos + indentSize, cursorPos + indentSize)
-        })
-      }
-      return
-    }
-
-    // 箇条書きまたは番号付きリストの場合
-    const isBullet = trimmed.match(/^([-*+])\s/)
-    const isNumbered = trimmed.match(/^(\d+)\.\s/)
-    const isChecklist = trimmed.match(/^([-*+])\s\[[ x]\]\s/)
-
-    if (isBullet || isNumbered || isChecklist) {
-      event.preventDefault()
-      const cursorPos = textarea.selectionStart
-
-      // 現在のカーソル位置の行を特定
-      const lines = content.split('\n')
-      let currentLineIndex = 0
-      let charCount = 0
-      for (let i = 0; i < lines.length; i++) {
-        if (charCount + lines[i].length >= cursorPos) {
-          currentLineIndex = i
-          break
-        }
-        charCount += lines[i].length + 1 // +1 for newline
-      }
-      const currentLine = lines[currentLineIndex]
-
-      // 現在の行の開始位置を計算
-      let lineStartPos = 0
-      for (let i = 0; i < currentLineIndex; i++) {
-        lineStartPos += lines[i].length + 1
-      }
-
-      // 現在のインデントレベルを取得
-      const currentIndentMatch = currentLine.match(/^(\s*)/)
-      const currentIndent = currentIndentMatch ? currentIndentMatch[1].length : 0
-
-      if (event.shiftKey) {
-        // Shift+Tab: インデント解除（現在の行の先頭からスペースを削除）
-        if (currentIndent > 0) {
-          const removeSpaces = Math.min(2, currentIndent)
-          const newLine = currentLine.slice(removeSpaces)
-          const newLines = [...lines]
-          newLines[currentLineIndex] = newLine
-          const newContent = newLines.join('\n')
-          updateBlock(blockId, newContent)
-          nextTick(() => {
-            const newCursorPos = Math.max(lineStartPos, cursorPos - removeSpaces)
-            textarea.setSelectionRange(newCursorPos, newCursorPos)
-          })
-        }
-      } else {
-        // Tab: インデント追加（現在の行の先頭に2スペース追加）
-        // 直前の行のインデント+2までに制限
-        let maxIndent = 10 // 最大インデント
-
-        if (currentLineIndex > 0) {
-          const prevLine = lines[currentLineIndex - 1]
-          const prevIndentMatch = prevLine.match(/^(\s*)/)
-          const prevIndent = prevIndentMatch ? prevIndentMatch[1].length : 0
-          const prevIsList = prevLine.trim().match(/^([-*+]|\d+\.)\s/)
-
-          if (prevIsList) {
-            // 直前がリストの場合、そのインデント+2まで許可
-            maxIndent = prevIndent + 2
-          }
-        }
-
-        if (currentIndent < maxIndent) {
-          const newLine = '  ' + currentLine
-          const newLines = [...lines]
-          newLines[currentLineIndex] = newLine
-          const newContent = newLines.join('\n')
-          updateBlock(blockId, newContent)
-          nextTick(() => {
-            textarea.setSelectionRange(cursorPos + 2, cursorPos + 2)
-          })
-        }
-      }
-      return
-    }
-  }
-}
-
-function adjustTextareaHeight(textarea: HTMLTextAreaElement) {
-  textarea.style.height = 'auto'
-  textarea.style.height = `${textarea.scrollHeight}px`
-}
-
-function undo() {
-  if (historyIndex.value > 0) {
-    historyIndex.value--
-    const state = history.value[historyIndex.value]
-    isUndoRedo.value = true
-    emit('update:modelValue', state.content)
-
-    // 編集状態とカーソル位置を復元
-    nextTick(() => {
-      if (state.editingBlockIndex !== null) {
-        editingBlockIndex.value = state.editingBlockIndex
-        const blockId = editingBlockId.value
-        if (blockId) {
-          nextTick(() => {
-            const textarea = blockRefs.value.get(blockId)
-            if (textarea) {
-              textarea.focus()
-              if (state.cursorPos !== null) {
-                textarea.setSelectionRange(state.cursorPos, state.cursorPos)
-              }
-              adjustTextareaHeight(textarea)
-            }
-          })
-        }
-      } else {
-        editingBlockIndex.value = null
-      }
-    })
-  }
-}
-
-function redo() {
-  if (historyIndex.value < history.value.length - 1) {
-    historyIndex.value++
-    const state = history.value[historyIndex.value]
-    isUndoRedo.value = true
-    emit('update:modelValue', state.content)
-
-    // 編集状態とカーソル位置を復元
-    nextTick(() => {
-      if (state.editingBlockIndex !== null) {
-        editingBlockIndex.value = state.editingBlockIndex
-        const blockId = editingBlockId.value
-        if (blockId) {
-          nextTick(() => {
-            const textarea = blockRefs.value.get(blockId)
-            if (textarea) {
-              textarea.focus()
-              if (state.cursorPos !== null) {
-                textarea.setSelectionRange(state.cursorPos, state.cursorPos)
-              }
-              adjustTextareaHeight(textarea)
-            }
-          })
-        }
-      } else {
-        editingBlockIndex.value = null
-      }
-    })
-  }
+  baseHandleBlur(blockId)
 }
 
 function setBlockRef(blockId: string, el: HTMLTextAreaElement | null) {
   if (el) {
     blockRefs.value.set(blockId, el)
-    // フォーカス待ちがあれば実行
-    if (pendingFocus.value && pendingFocus.value.blockId === blockId) {
+    if (pendingFocus.value && blocks.value[pendingFocus.value.blockIndex]?.id === blockId) {
       el.focus()
       adjustTextareaHeight(el)
       el.setSelectionRange(pendingFocus.value.cursorPos, pendingFocus.value.cursorPos)
@@ -1418,6 +180,8 @@ function toggleCheckbox(blockId: string, lineIndex: number = 0) {
   if (lineIndex >= lines.length) return
 
   const line = lines[lineIndex]
+  if (!line) return
+
   let newLine: string
 
   if (line.match(/\[ \]/)) {
@@ -1436,7 +200,6 @@ function toggleCheckbox(blockId: string, lineIndex: number = 0) {
 function handlePreviewClick(event: MouseEvent, blockId: string) {
   const target = event.target as HTMLElement
 
-  // チェックボックス本体（input要素）がクリックされた場合のみトグル
   if (target.tagName === 'INPUT' && target.classList.contains('checklist-checkbox')) {
     event.preventDefault()
     event.stopPropagation()
@@ -1445,7 +208,6 @@ function handlePreviewClick(event: MouseEvent, blockId: string) {
     return
   }
 
-  // リンクがクリックされた場合は新しいタブで開く
   if (target.tagName === 'A') {
     const href = target.getAttribute('href')
     if (href) {
@@ -1456,150 +218,7 @@ function handlePreviewClick(event: MouseEvent, blockId: string) {
     }
   }
 
-  // それ以外は編集モードに切り替え
   startEditing(blockId)
-}
-
-// フォーマットツールバー関数
-function applyFormat(format: string) {
-  if (editingBlockId.value === null) return
-
-  // テーブルの場合は/tableコマンドを挿入
-  if (format === 'table') {
-    const blockId = editingBlockId.value
-    const textarea = blockRefs.value.get(blockId)
-    if (!textarea) return
-
-    // 現在のコンテンツをクリアして /table 3 3 を挿入
-    updateBlock(blockId, '/table 3 3')
-
-    nextTick(() => {
-      textarea.focus()
-      // カーソルを最後に移動
-      textarea.setSelectionRange(10, 10)
-      adjustTextareaHeight(textarea)
-    })
-    return
-  }
-
-  const blockId = editingBlockId.value
-  const textarea = blockRefs.value.get(blockId)
-  if (!textarea) return
-
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const content = textarea.value
-  const selectedText = content.substring(start, end)
-
-  let newContent = ''
-  let newCursorPos = start
-
-  switch (format) {
-    case 'h1':
-      if (content.startsWith('# ')) {
-        newContent = content.substring(2)
-        newCursorPos = Math.max(0, start - 2)
-      } else {
-        newContent = '# ' + content.replace(/^#{1,6}\s/, '')
-        newCursorPos = start + 2
-      }
-      break
-    case 'h2':
-      if (content.startsWith('## ')) {
-        newContent = content.substring(3)
-        newCursorPos = Math.max(0, start - 3)
-      } else {
-        newContent = '## ' + content.replace(/^#{1,6}\s/, '')
-        newCursorPos = start + 3
-      }
-      break
-    case 'h3':
-      if (content.startsWith('### ')) {
-        newContent = content.substring(4)
-        newCursorPos = Math.max(0, start - 4)
-      } else {
-        newContent = '### ' + content.replace(/^#{1,6}\s/, '')
-        newCursorPos = start + 4
-      }
-      break
-    case 'bold':
-      if (selectedText) {
-        newContent = content.substring(0, start) + `**${selectedText}**` + content.substring(end)
-        newCursorPos = end + 4
-      } else {
-        newContent = content.substring(0, start) + '****' + content.substring(end)
-        newCursorPos = start + 2
-      }
-      break
-    case 'italic':
-      if (selectedText) {
-        newContent = content.substring(0, start) + `*${selectedText}*` + content.substring(end)
-        newCursorPos = end + 2
-      } else {
-        newContent = content.substring(0, start) + '**' + content.substring(end)
-        newCursorPos = start + 1
-      }
-      break
-    case 'code':
-      if (selectedText) {
-        newContent = content.substring(0, start) + `\`${selectedText}\`` + content.substring(end)
-        newCursorPos = end + 2
-      } else {
-        newContent = content.substring(0, start) + '``' + content.substring(end)
-        newCursorPos = start + 1
-      }
-      break
-    case 'code-block':
-      newContent = '```\n' + content + '\n```'
-      newCursorPos = 4
-      break
-    case 'bullet':
-      if (content.startsWith('- ')) {
-        newContent = content.substring(2)
-        newCursorPos = Math.max(0, start - 2)
-      } else {
-        newContent = '- ' + content.replace(/^(\d+\.|-|\*|\+)\s/, '')
-        newCursorPos = start + 2
-      }
-      break
-    case 'numbered':
-      if (content.match(/^\d+\.\s/)) {
-        newContent = content.replace(/^\d+\.\s/, '')
-        newCursorPos = Math.max(0, start - 3)
-      } else {
-        newContent = '1. ' + content.replace(/^(\d+\.|-|\*|\+)\s/, '')
-        newCursorPos = start + 3
-      }
-      break
-    case 'checklist':
-      if (content.startsWith('- [ ] ')) {
-        newContent = content.substring(6)
-        newCursorPos = Math.max(0, start - 6)
-      } else {
-        newContent = '- [ ] ' + content.replace(/^([-*+]\s\[[ x]\]\s|[-*+]\s|\d+\.\s)/, '')
-        newCursorPos = start + 6
-      }
-      break
-    case 'quote':
-      if (content.startsWith('> ')) {
-        newContent = content.substring(2)
-        newCursorPos = Math.max(0, start - 2)
-      } else {
-        newContent = '> ' + content
-        newCursorPos = start + 2
-      }
-      break
-    default:
-      return
-  }
-
-  updateBlock(blockId, newContent)
-
-  nextTick(() => {
-    textarea.focus()
-    textarea.setSelectionRange(newCursorPos, newCursorPos)
-    adjustTextareaHeight(textarea)
-  })
 }
 
 function insertTable() {
@@ -1612,22 +231,19 @@ function insertTable() {
   const rows = tableRows.value
   const cols = tableCols.value
 
-  // ヘッダー行を生成
   const headerCells = Array(cols).fill(0).map((_, i) => `Header ${i + 1}`).join(' | ')
   const headerRow = `| ${headerCells} |`
 
-  // セパレーター行を生成
   const separatorCells = Array(cols).fill('---').join(' | ')
   const separatorRow = `| ${separatorCells} |`
 
-  // データ行を生成
   const dataRows = Array(rows - 1).fill(0).map((_, rowIndex) => {
     const cells = Array(cols).fill(0).map((_, colIndex) => `Cell ${rowIndex + 1}-${colIndex + 1}`).join(' | ')
     return `| ${cells} |`
   }).join('\n')
 
   const newContent = `${headerRow}\n${separatorRow}\n${dataRows}`
-  const newCursorPos = 2 // カーソルを最初のヘッダーの位置に
+  const newCursorPos = 2
 
   updateBlock(blockId, newContent)
   showTableInput.value = false
@@ -1638,102 +254,6 @@ function insertTable() {
     adjustTextareaHeight(textarea)
   })
 }
-
-// ドラッグアンドドロップハンドラ
-function handleDragStart(event: DragEvent, blockIndex: number) {
-  draggedBlockIndex.value = blockIndex
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('text/plain', blockIndex.toString())
-  }
-}
-
-function handleDragOver(event: DragEvent, blockIndex: number) {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-  dragOverBlockIndex.value = blockIndex
-}
-
-function handleDragLeave() {
-  dragOverBlockIndex.value = null
-}
-
-function handleDrop(event: DragEvent, dropIndex: number) {
-  event.preventDefault()
-
-  if (draggedBlockIndex.value === null || draggedBlockIndex.value === dropIndex) {
-    draggedBlockIndex.value = null
-    dragOverBlockIndex.value = null
-    return
-  }
-
-  const dragIndex = draggedBlockIndex.value
-  const newBlocks = [...blocks.value]
-
-  // ドラッグされたブロックを取得
-  const [draggedBlock] = newBlocks.splice(dragIndex, 1)
-
-  // ドロップ位置に挿入
-  const insertIndex = dropIndex > dragIndex ? dropIndex : dropIndex
-  newBlocks.splice(insertIndex, 0, draggedBlock)
-
-  // 更新
-  emit('update:modelValue', newBlocks.map(b => b.content).join('\n'))
-
-  // クリーンアップ
-  draggedBlockIndex.value = null
-  dragOverBlockIndex.value = null
-}
-
-function handleDragEnd() {
-  draggedBlockIndex.value = null
-  dragOverBlockIndex.value = null
-}
-
-// 見出しセクションをコピー
-function copySection(blockId: string) {
-  const blockIndex = blocks.value.findIndex(b => b.id === blockId)
-  if (blockIndex === -1) return
-
-  const currentBlock = blocks.value[blockIndex]
-  const currentContent = currentBlock.content.trim()
-
-  // 見出しレベルを取得
-  const headingMatch = currentContent.match(/^(#{1,6})\s/)
-  if (!headingMatch) return
-
-  const currentLevel = headingMatch[1].length
-  const sectionBlocks = [currentBlock.content]
-
-  // 次の同レベルまたはそれ以上の見出しが現れるまでのブロックを集める
-  for (let i = blockIndex + 1; i < blocks.value.length; i++) {
-    const nextBlock = blocks.value[i]
-    const nextContent = nextBlock.content.trim()
-    const nextHeadingMatch = nextContent.match(/^(#{1,6})\s/)
-
-    // 次の見出しが同レベルまたはそれ以上の場合は終了
-    if (nextHeadingMatch && nextHeadingMatch[1].length <= currentLevel) {
-      break
-    }
-
-    sectionBlocks.push(nextBlock.content)
-  }
-
-  try {
-    // セクション全体を改行で連結してコピー
-    navigator.clipboard.writeText(sectionBlocks.join('\n'))
-    copiedBlockId.value = blockId
-    // 2秒後にリセット
-    setTimeout(() => {
-      copiedBlockId.value = null
-    }, 2000)
-  } catch (err) {
-    console.error('Failed to copy:', err)
-  }
-}
-
 </script>
 
 <template>
