@@ -17,11 +17,13 @@ Records a demo video of the Live Editor application using Playwright.
 ### Usage
 
 1. Start the development server:
+
    ```bash
    pnpm dev
    ```
 
 2. In a separate terminal, run the recording script:
+
    ```bash
    pnpm record-demo
    # or
@@ -45,6 +47,7 @@ DEMO_URL=http://localhost:4000 node scripts/record-demo.js
 ### What it does
 
 The script:
+
 1. Launches a headless Chromium browser
 2. Navigates to the local development server
 3. Simulates typing various markdown content:
@@ -60,6 +63,7 @@ The script:
 ### Customization
 
 You can modify the `record-demo.js` script to:
+
 - Change the viewport size
 - Add more interactions
 - Adjust timing between actions (see `TIMING` configuration at the top of the script)

@@ -15,13 +15,10 @@ const TIMING = {
 async function recordDemo() {
   console.log('Starting demo recording...');
   console.log(`Using URL: ${DEMO_URL}`);
-  
+
   const browser = await chromium.launch({
     headless: true,
-    args: [
-      '--font-render-hinting=none',
-      '--disable-font-subpixel-positioning',
-    ],
+    args: ['--font-render-hinting=none', '--disable-font-subpixel-positioning'],
   });
 
   const context = await browser.newContext({
@@ -40,7 +37,7 @@ async function recordDemo() {
     // Navigate to the application
     console.log('Navigating to application...');
     await page.goto(DEMO_URL, { waitUntil: 'networkidle' });
-    
+
     // Wait for the editor to be ready
     await page.waitForTimeout(TIMING.INITIAL_WAIT);
 
@@ -98,7 +95,7 @@ async function recordDemo() {
     console.log('Scrolling to show content...');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
     await page.waitForTimeout(TIMING.LONG_PAUSE);
-    
+
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(TIMING.LONG_PAUSE);
 
@@ -109,7 +106,7 @@ async function recordDemo() {
   } finally {
     // Get video path before closing
     videoPath = await page.video().path();
-    
+
     // Close context to save the video
     await context.close();
     await browser.close();
@@ -146,7 +143,7 @@ async function recordDemo() {
   }
 }
 
-recordDemo().catch((error) => {
+recordDemo().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
