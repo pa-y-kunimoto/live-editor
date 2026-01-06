@@ -74,25 +74,6 @@ async function recordDemo() {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
-    // Demonstrate editing: Go back and modify text
-    console.log('Editing existing text...');
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('End');
-    await page.waitForTimeout(TIMING.SHORT_PAUSE);
-    // Select and delete some text
-    for (let i = 0; i < 6; i++) {
-      await page.keyboard.press('Shift+ArrowLeft');
-    }
-    await page.waitForTimeout(TIMING.SHORT_PAUSE);
-    await page.keyboard.press('Backspace');
-    await page.waitForTimeout(TIMING.SHORT_PAUSE);
-    await page.keyboard.type('support');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('End');
-    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
-
     // Type code block
     console.log('Typing code block...');
     await page.keyboard.type('```javascript');
@@ -101,23 +82,6 @@ async function recordDemo() {
     await page.keyboard.press('Enter');
     await page.keyboard.type('```');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
-
-    // Edit the code block
-    console.log('Editing code block...');
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('Home');
-    await page.keyboard.press('End');
-    await page.waitForTimeout(TIMING.SHORT_PAUSE);
-    // Select "World" and replace it
-    for (let i = 0; i < 9; i++) {
-      await page.keyboard.press('Shift+ArrowLeft');
-    }
-    await page.waitForTimeout(TIMING.SHORT_PAUSE);
-    await page.keyboard.type('Editor");');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(TIMING.MEDIUM_PAUSE);
 
     // Type a checklist
