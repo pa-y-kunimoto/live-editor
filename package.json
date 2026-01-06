@@ -10,9 +10,11 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "clean": "pnpm -r clean && rm -rf node_modules"
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "record-demo": "node scripts/record-demo.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
