@@ -2,6 +2,10 @@
 
 A block-based Markdown editor with real-time preview, built with Nuxt.js and Vue 3.
 
+## Demo
+
+<video src="./docs/assets/demo.webm" controls width="100%" />
+
 ## Overview
 
 Live Editor is a modern, block-based markdown editor that provides an intuitive WYSIWYG-like editing experience while maintaining full markdown compatibility. Each piece of content is treated as an independent "block" that can be edited, moved, and styled individually.
