@@ -1,4 +1,4 @@
-import { ref, computed, nextTick, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, nextTick, type ComputedRef } from 'vue'
 import type { Block } from './useMarkdownBlocks'
 
 export function useBlockEditor(
@@ -93,7 +93,7 @@ export function useBlockEditor(
     adjustTextareaHeight(textarea)
   }
 
-  function handleBlur(blockId: string) {
+  function handleBlur(_blockId: string) {
     if (ignoreBlur.value) {
       return
     }

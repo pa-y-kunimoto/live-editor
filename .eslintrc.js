@@ -11,6 +11,7 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
+  ignorePatterns: ['**/*.vue'],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/explicit-function-return-type': 'off',

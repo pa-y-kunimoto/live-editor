@@ -71,33 +71,33 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // メタタグから情報を抽出するヘルパー関数
+  const getMetaContent = (html: string, property: string): string | null => {
+    // property属性パターン (og:title, og:description など)
+    const propertyMatch = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
+      || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
+    if (propertyMatch) return propertyMatch[1].trim()
+
+    // name属性パターン (description, twitter:title など)
+    const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
+      || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
+    if (nameMatch) return nameMatch[1].trim()
+
+    return null
+  }
+
   try {
     const html = await fetchHtml(url)
-
-    // メタタグから情報を抽出するヘルパー関数
-    function getMetaContent(property: string): string | null {
-      // property属性パターン (og:title, og:description など)
-      const propertyMatch = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-        || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
-      if (propertyMatch) return propertyMatch[1].trim()
-
-      // name属性パターン (description, twitter:title など)
-      const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-        || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
-      if (nameMatch) return nameMatch[1].trim()
-
-      return null
-    }
 
     // <title>タグからタイトルを抽出（複数行・空白に対応）
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
     const htmlTitle = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : null
 
     // OGP情報を取得
-    const ogTitle = getMetaContent('og:title')
-    const ogDescription = getMetaContent('og:description') || getMetaContent('description')
-    const ogImage = getMetaContent('og:image')
-    const ogSiteName = getMetaContent('og:site_name')
+    const ogTitle = getMetaContent(html, 'og:title')
+    const ogDescription = getMetaContent(html, 'og:description') || getMetaContent(html, 'description')
+    const ogImage = getMetaContent(html, 'og:image')
+    const ogSiteName = getMetaContent(html, 'og:site_name')
 
     // faviconを取得
     const faviconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i)

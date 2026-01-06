@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { ref, nextTick } from 'vue'
 import { useEditorHistory } from '../useEditorHistory'
 
@@ -84,7 +84,7 @@ describe('useEditorHistory', () => {
       const editingBlockIndex = ref<number | null>(null)
       const getTextarea = vi.fn()
 
-      const { undo, historyIndex } = useEditorHistory(content, editingBlockIndex, getTextarea)
+      const { undo } = useEditorHistory(content, editingBlockIndex, getTextarea)
 
       const emit = vi.fn()
       const startEditingByIndex = vi.fn()

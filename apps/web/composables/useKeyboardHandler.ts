@@ -427,7 +427,7 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
     textarea: HTMLTextAreaElement,
     blockId: string,
     updateBlock: (blockId: string, content: string) => void,
-    adjustTextareaHeight: (textarea: HTMLTextAreaElement) => void
+    _adjustTextareaHeight: (textarea: HTMLTextAreaElement) => void
   ) {
     const content = textarea.value
     const trimmed = content.trim()
