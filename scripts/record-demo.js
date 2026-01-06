@@ -18,6 +18,10 @@ async function recordDemo() {
   
   const browser = await chromium.launch({
     headless: true,
+    args: [
+      '--font-render-hinting=none',
+      '--disable-font-subpixel-positioning',
+    ],
   });
 
   const context = await browser.newContext({
@@ -26,6 +30,7 @@ async function recordDemo() {
       dir: path.join(__dirname, '../docs/assets'),
       size: { width: 1280, height: 720 },
     },
+    locale: 'en-US',
   });
 
   const page = await context.newPage();
