@@ -1,13 +1,13 @@
-import https from 'node:https'
-import http from 'node:http'
+import https from 'node:https';
+import http from 'node:http';
 
 // グローバルURLを使用
-const URLConstructor = globalThis.URL
+const URLConstructor = globalThis.URL;
 
 function fetchHtml(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const parsedUrl = new URLConstructor(url)
-    const protocol = parsedUrl.protocol === 'https:' ? https : http
+    const parsedUrl = new URLConstructor(url);
+    const protocol = parsedUrl.protocol === 'https:' ? https : http;
 
     const options = {
       hostname: parsedUrl.hostname,
@@ -15,117 +15,132 @@ function fetchHtml(url: string): Promise<string> {
       path: parsedUrl.pathname + parsedUrl.search,
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
       },
       timeout: 5000,
-      rejectUnauthorized: false // 開発環境用: SSL証明書検証をスキップ
-    }
+      rejectUnauthorized: false, // 開発環境用: SSL証明書検証をスキップ
+    };
 
-    const req = protocol.request(options, (res) => {
+    const req = protocol.request(options, res => {
       // リダイレクトをフォロー
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchHtml(res.headers.location).then(resolve).catch(reject)
-        return
+        fetchHtml(res.headers.location).then(resolve).catch(reject);
+        return;
       }
 
       if (res.statusCode && res.statusCode >= 400) {
-        reject(new Error(`HTTP ${res.statusCode}`))
-        return
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
       }
 
-      let data = ''
-      res.setEncoding('utf8')
-      res.on('data', (chunk) => { data += chunk })
-      res.on('end', () => resolve(data))
-    })
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => {
+        data += chunk;
+      });
+      res.on('end', () => resolve(data));
+    });
 
-    req.on('error', reject)
+    req.on('error', reject);
     req.on('timeout', () => {
-      req.destroy()
-      reject(new Error('Timeout'))
-    })
-    req.end()
-  })
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
+    req.end();
+  });
 }
 
-export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const url = query.url as string
+export default defineEventHandler(async event => {
+  const query = getQuery(event);
+  const url = query.url as string;
 
   if (!url) {
     throw createError({
       statusCode: 400,
-      message: 'URL parameter is required'
-    })
+      message: 'URL parameter is required',
+    });
   }
 
   // URLの形式を検証
   try {
-    new URLConstructor(url)
+    new URLConstructor(url);
   } catch {
     throw createError({
       statusCode: 400,
-      message: 'Invalid URL format'
-    })
+      message: 'Invalid URL format',
+    });
   }
 
   // メタタグから情報を抽出するヘルパー関数
   const getMetaContent = (html: string, property: string): string | null => {
     // property属性パターン (og:title, og:description など)
-    const propertyMatch = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-      || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
-    if (propertyMatch) return propertyMatch[1].trim()
+    const propertyMatch =
+      html.match(
+        new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i')
+      ) ||
+      html.match(
+        new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i')
+      );
+    if (propertyMatch) return propertyMatch[1].trim();
 
     // name属性パターン (description, twitter:title など)
-    const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-      || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
-    if (nameMatch) return nameMatch[1].trim()
+    const nameMatch =
+      html.match(
+        new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i')
+      ) ||
+      html.match(
+        new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i')
+      );
+    if (nameMatch) return nameMatch[1].trim();
 
-    return null
-  }
+    return null;
+  };
 
   try {
-    const html = await fetchHtml(url)
+    const html = await fetchHtml(url);
 
     // <title>タグからタイトルを抽出（複数行・空白に対応）
-    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-    const htmlTitle = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : null
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const htmlTitle = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : null;
 
     // OGP情報を取得
-    const ogTitle = getMetaContent(html, 'og:title')
-    const ogDescription = getMetaContent(html, 'og:description') || getMetaContent(html, 'description')
-    const ogImage = getMetaContent(html, 'og:image')
-    const ogSiteName = getMetaContent(html, 'og:site_name')
+    const ogTitle = getMetaContent(html, 'og:title');
+    const ogDescription =
+      getMetaContent(html, 'og:description') || getMetaContent(html, 'description');
+    const ogImage = getMetaContent(html, 'og:image');
+    const ogSiteName = getMetaContent(html, 'og:site_name');
 
     // faviconを取得
-    const faviconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i)
-      || html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:shortcut )?icon["']/i)
-    let favicon = faviconMatch ? faviconMatch[1] : null
+    const faviconMatch =
+      html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i) ||
+      html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:shortcut )?icon["']/i);
+    let favicon = faviconMatch ? faviconMatch[1] : null;
 
     // 相対URLを絶対URLに変換
     if (favicon && !favicon.startsWith('http')) {
-      const parsedUrl = new URLConstructor(url)
+      const parsedUrl = new URLConstructor(url);
       if (favicon.startsWith('//')) {
-        favicon = parsedUrl.protocol + favicon
+        favicon = parsedUrl.protocol + favicon;
       } else if (favicon.startsWith('/')) {
-        favicon = `${parsedUrl.protocol}//${parsedUrl.host}${favicon}`
+        favicon = `${parsedUrl.protocol}//${parsedUrl.host}${favicon}`;
       } else {
-        favicon = `${parsedUrl.protocol}//${parsedUrl.host}/${favicon}`
+        favicon = `${parsedUrl.protocol}//${parsedUrl.host}/${favicon}`;
       }
     }
 
     // og:imageも相対URLを絶対URLに変換
-    let image = ogImage
+    let image = ogImage;
     if (image && !image.startsWith('http')) {
-      const parsedUrl = new URLConstructor(url)
+      const parsedUrl = new URLConstructor(url);
       if (image.startsWith('//')) {
-        image = parsedUrl.protocol + image
+        image = parsedUrl.protocol + image;
       } else if (image.startsWith('/')) {
-        image = `${parsedUrl.protocol}//${parsedUrl.host}${image}`
+        image = `${parsedUrl.protocol}//${parsedUrl.host}${image}`;
       } else {
-        image = `${parsedUrl.protocol}//${parsedUrl.host}/${image}`
+        image = `${parsedUrl.protocol}//${parsedUrl.host}/${image}`;
       }
     }
 
@@ -134,10 +149,10 @@ export default defineEventHandler(async (event) => {
       description: ogDescription || null,
       image: image || null,
       siteName: ogSiteName || null,
-      favicon: favicon || null
-    }
+      favicon: favicon || null,
+    };
   } catch {
     // 取得できない場合はnullを返す
-    return { title: null, description: null, image: null, siteName: null, favicon: null }
+    return { title: null, description: null, image: null, siteName: null, favicon: null };
   }
-})
+});

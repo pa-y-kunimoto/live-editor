@@ -105,18 +105,18 @@ The main application is built with Nuxt.js 4 and follows Vue 3's Composition API
 
 #### Composable Details
 
-| Composable | Purpose | Key Exports |
-|------------|---------|-------------|
-| `useMarkdownBlocks` | Parses markdown into blocks | `blocks`, `getBlockType()`, `parseCodeBlock()`, `parseChecklist()`, `getSectionBlockIds()` |
-| `useMarkdownRenderer` | Renders blocks to HTML | `renderBlock()`, `getRenderedBlock()`, `linkPreviews`, `loadingUrls` |
-| `useBlockEditor` | Manages editing state | `editingBlockIndex`, `startEditing()`, `updateBlock()`, `handleDragStart()`, `handleDrop()` |
-| `useLinkPreview` | Fetches OGP metadata | `processUrlBlock()`, `fetchPreview()` |
-| `useEditorHistory` | Undo/redo functionality | `history`, `undo()`, `redo()`, `isUndoRedo` |
-| `useFormatToolbar` | Text formatting | `applyFormat()` with types: bold, italic, code, link, h1-h3, lists |
-| `useKeyboardHandler` | Keyboard events | `handleKeyDown()` for Enter, Backspace, Tab, arrows |
-| `useTableGenerator` | Table creation | `parseTableCommand()`, `generateTableMarkdown()` |
-| `useHighlight` | Syntax highlighting | `highlightCode()` using highlight.js |
-| `useMarkdownDocument` | Document operations | `markdownContent`, `loadDefaultContent()`, `copyToClipboard()` |
+| Composable            | Purpose                     | Key Exports                                                                                 |
+| --------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| `useMarkdownBlocks`   | Parses markdown into blocks | `blocks`, `getBlockType()`, `parseCodeBlock()`, `parseChecklist()`, `getSectionBlockIds()`  |
+| `useMarkdownRenderer` | Renders blocks to HTML      | `renderBlock()`, `getRenderedBlock()`, `linkPreviews`, `loadingUrls`                        |
+| `useBlockEditor`      | Manages editing state       | `editingBlockIndex`, `startEditing()`, `updateBlock()`, `handleDragStart()`, `handleDrop()` |
+| `useLinkPreview`      | Fetches OGP metadata        | `processUrlBlock()`, `fetchPreview()`                                                       |
+| `useEditorHistory`    | Undo/redo functionality     | `history`, `undo()`, `redo()`, `isUndoRedo`                                                 |
+| `useFormatToolbar`    | Text formatting             | `applyFormat()` with types: bold, italic, code, link, h1-h3, lists                          |
+| `useKeyboardHandler`  | Keyboard events             | `handleKeyDown()` for Enter, Backspace, Tab, arrows                                         |
+| `useTableGenerator`   | Table creation              | `parseTableCommand()`, `generateTableMarkdown()`                                            |
+| `useHighlight`        | Syntax highlighting         | `highlightCode()` using highlight.js                                                        |
+| `useMarkdownDocument` | Document operations         | `markdownContent`, `loadDefaultContent()`, `copyToClipboard()`                              |
 
 #### Data Flow
 
@@ -163,16 +163,16 @@ The application includes a server-side API for OGP metadata fetching:
 
 ```typescript
 // Request
-GET /api/fetch-title?url=https://example.com
-
-// Response
-{
-  title: "Example Domain",
-  description: "This domain is for use in examples...",
-  image: "https://example.com/og-image.png",
-  siteName: "Example",
-  favicon: "https://example.com/favicon.ico"
-}
+GET / api / fetch - title
+  ? (url = https) //example.com
+  : // Response
+    {
+      title: 'Example Domain',
+      description: 'This domain is for use in examples...',
+      image: 'https://example.com/og-image.png',
+      siteName: 'Example',
+      favicon: 'https://example.com/favicon.ico',
+    };
 ```
 
 ### @live-editor/core

@@ -1,8 +1,8 @@
-import { computed, type Ref } from 'vue'
+import { computed, type Ref } from 'vue';
 
 export interface Block {
-  id: string
-  content: string
+  id: string;
+  content: string;
 }
 
 export type BlockType =
@@ -16,248 +16,255 @@ export type BlockType =
   | 'blockquote'
   | 'table'
   | 'empty'
-  | 'paragraph'
+  | 'paragraph';
 
 export function useMarkdownBlocks(content: Ref<string>) {
   const blocks = computed<Block[]>(() => {
-    const lines = content.value.split('\n')
-    const result: Block[] = []
-    let currentBlock: string[] = []
-    let blockId = 0
+    const lines = content.value.split('\n');
+    const result: Block[] = [];
+    let currentBlock: string[] = [];
+    let blockId = 0;
 
     const pushBlock = () => {
       if (currentBlock.length > 0) {
         result.push({
           id: `block-${blockId++}`,
-          content: currentBlock.join('\n')
-        })
-        currentBlock = []
+          content: currentBlock.join('\n'),
+        });
+        currentBlock = [];
       }
-    }
+    };
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i] ?? ''
-      const trimmed = line.trim()
+      const line = lines[i] ?? '';
+      const trimmed = line.trim();
 
       // 見出し
       if (trimmed.match(/^#{1,6}\s/)) {
-        pushBlock()
+        pushBlock();
         result.push({
           id: `block-${blockId++}`,
-          content: line
-        })
-        continue
+          content: line,
+        });
+        continue;
       }
 
       // リスト項目（ネストを含む）- 連続するリスト項目を1つのブロックにまとめる
-      const isListItem = trimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || trimmed.match(/^\d+\.(\s|$)/)
-      const isIndentedListItem = line.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || line.match(/^\s+\d+\.(\s|$)/)
+      const isListItem =
+        trimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || trimmed.match(/^\d+\.(\s|$)/);
+      const isIndentedListItem =
+        line.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || line.match(/^\s+\d+\.(\s|$)/);
 
       if (isListItem || isIndentedListItem) {
-        pushBlock()
-        const listLines = [line]
+        pushBlock();
+        const listLines = [line];
         // 次の行もリスト項目（インデントされている可能性も含む）なら追加
         while (i + 1 < lines.length) {
-          const nextLine = lines[i + 1] ?? ''
-          const nextTrimmed = nextLine.trim()
+          const nextLine = lines[i + 1] ?? '';
+          const nextTrimmed = nextLine.trim();
           // 空行の場合は終了
           if (nextTrimmed === '') {
-            break
+            break;
           }
           // リスト項目、チェックリスト、番号付きリスト、またはインデントされたリスト項目の場合は継続
-          const nextIsListItem = nextTrimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || nextTrimmed.match(/^\d+\.(\s|$)/)
-          const nextIsIndentedListItem = nextLine.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || nextLine.match(/^\s+\d+\.(\s|$)/)
+          const nextIsListItem =
+            nextTrimmed.match(/^[-*+](\s|$)(\[[ x]\]\s)?/) || nextTrimmed.match(/^\d+\.(\s|$)/);
+          const nextIsIndentedListItem =
+            nextLine.match(/^\s+[-*+](\s|$)(\[[ x]\]\s)?/) || nextLine.match(/^\s+\d+\.(\s|$)/);
 
           if (nextIsListItem || nextIsIndentedListItem) {
-            i++
-            listLines.push(nextLine)
+            i++;
+            listLines.push(nextLine);
           } else {
-            break
+            break;
           }
         }
         result.push({
           id: `block-${blockId++}`,
-          content: listLines.join('\n')
-        })
-        continue
+          content: listLines.join('\n'),
+        });
+        continue;
       }
 
       // 引用（ネストを含む）- 連続する引用行を1つのブロックにまとめる
-      const isQuote = trimmed.match(/^>+\s?/)
-      const isIndentedQuote = line.match(/^\s+>+\s?/)
+      const isQuote = trimmed.match(/^>+\s?/);
+      const isIndentedQuote = line.match(/^\s+>+\s?/);
 
       if (isQuote || isIndentedQuote) {
-        pushBlock()
-        const quoteLines = [line]
+        pushBlock();
+        const quoteLines = [line];
         // 次の行も引用（インデントされている可能性も含む）なら追加
         while (i + 1 < lines.length) {
-          const nextLine = lines[i + 1] ?? ''
-          const nextTrimmed = nextLine.trim()
+          const nextLine = lines[i + 1] ?? '';
+          const nextTrimmed = nextLine.trim();
           // 空行の場合は終了
           if (nextTrimmed === '') {
-            break
+            break;
           }
           // 引用行またはインデントされた引用行の場合は継続
-          const nextIsQuote = nextTrimmed.match(/^>+\s?/)
-          const nextIsIndentedQuote = nextLine.match(/^\s+>+\s?/)
+          const nextIsQuote = nextTrimmed.match(/^>+\s?/);
+          const nextIsIndentedQuote = nextLine.match(/^\s+>+\s?/);
 
           if (nextIsQuote || nextIsIndentedQuote) {
-            i++
-            quoteLines.push(nextLine)
+            i++;
+            quoteLines.push(nextLine);
           } else {
-            break
+            break;
           }
         }
         result.push({
           id: `block-${blockId++}`,
-          content: quoteLines.join('\n')
-        })
-        continue
+          content: quoteLines.join('\n'),
+        });
+        continue;
       }
 
       // 水平線
       if (trimmed.match(/^[-*_]{3,}$/)) {
-        pushBlock()
+        pushBlock();
         result.push({
           id: `block-${blockId++}`,
-          content: line
-        })
-        continue
+          content: line,
+        });
+        continue;
       }
 
       if (trimmed.startsWith('```')) {
-        pushBlock()
-        const codeBlock = [line]
-        i++
+        pushBlock();
+        const codeBlock = [line];
+        i++;
         while (i < lines.length) {
-          const codeLine = lines[i] ?? ''
+          const codeLine = lines[i] ?? '';
           if (codeLine.trim().startsWith('```')) {
-            codeBlock.push(codeLine)
-            break
+            codeBlock.push(codeLine);
+            break;
           }
-          codeBlock.push(codeLine)
-          i++
+          codeBlock.push(codeLine);
+          i++;
         }
         result.push({
           id: `block-${blockId++}`,
-          content: codeBlock.join('\n')
-        })
-        continue
+          content: codeBlock.join('\n'),
+        });
+        continue;
       }
 
       if (trimmed === '') {
-        pushBlock()
+        pushBlock();
         result.push({
           id: `block-${blockId++}`,
-          content: ''
-        })
-        continue
+          content: '',
+        });
+        continue;
       }
 
       if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-        const tableLines = [line]
+        const tableLines = [line];
         while (i + 1 < lines.length) {
-          const nextTableLine = lines[i + 1] ?? ''
+          const nextTableLine = lines[i + 1] ?? '';
           if (nextTableLine.trim().startsWith('|')) {
-            i++
-            tableLines.push(nextTableLine)
+            i++;
+            tableLines.push(nextTableLine);
           } else {
-            break
+            break;
           }
         }
-        pushBlock()
+        pushBlock();
         result.push({
           id: `block-${blockId++}`,
-          content: tableLines.join('\n')
-        })
-        continue
+          content: tableLines.join('\n'),
+        });
+        continue;
       }
 
-      currentBlock.push(line)
+      currentBlock.push(line);
     }
 
-    pushBlock()
+    pushBlock();
 
     if (result.length === 0) {
-      result.push({ id: 'block-0', content: '' })
+      result.push({ id: 'block-0', content: '' });
     }
 
-    return result
-  })
+    return result;
+  });
 
   function getBlockType(content: string): BlockType {
-    const trimmed = content.trim()
-    if (trimmed.startsWith('# ')) return 'heading-1'
-    if (trimmed.startsWith('## ')) return 'heading-2'
-    if (trimmed.startsWith('### ')) return 'heading-3'
-    if (trimmed.startsWith('```')) return 'code-block'
-    if (trimmed.match(/^[-*+]\s\[[ x]\]\s/)) return 'checklist'
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) return 'bullet-list'
-    if (trimmed.match(/^\d+\.\s/)) return 'numbered-list'
-    if (trimmed.startsWith('> ')) return 'blockquote'
-    if (trimmed.startsWith('|')) return 'table'
-    if (trimmed === '') return 'empty'
-    return 'paragraph'
+    const trimmed = content.trim();
+    if (trimmed.startsWith('# ')) return 'heading-1';
+    if (trimmed.startsWith('## ')) return 'heading-2';
+    if (trimmed.startsWith('### ')) return 'heading-3';
+    if (trimmed.startsWith('```')) return 'code-block';
+    if (trimmed.match(/^[-*+]\s\[[ x]\]\s/)) return 'checklist';
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ '))
+      return 'bullet-list';
+    if (trimmed.match(/^\d+\.\s/)) return 'numbered-list';
+    if (trimmed.startsWith('> ')) return 'blockquote';
+    if (trimmed.startsWith('|')) return 'table';
+    if (trimmed === '') return 'empty';
+    return 'paragraph';
   }
 
   function parseCodeBlock(content: string): { lang: string; code: string } | null {
-    const match = content.match(/^```(\w*)\n?([\s\S]*?)```$/m)
+    const match = content.match(/^```(\w*)\n?([\s\S]*?)```$/m);
     if (match) {
       return {
         lang: match[1] ?? 'text',
-        code: (match[2] ?? '').replace(/\n$/, '')
-      }
+        code: (match[2] ?? '').replace(/\n$/, ''),
+      };
     }
-    return null
+    return null;
   }
 
-  function parseChecklist(content: string): { checked: boolean; text: string; indent: string } | null {
-    const match = content.match(/^(\s*)([-*+])\s\[([ x])\]\s(.*)$/)
+  function parseChecklist(
+    content: string
+  ): { checked: boolean; text: string; indent: string } | null {
+    const match = content.match(/^(\s*)([-*+])\s\[([ x])\]\s(.*)$/);
     if (match && match[1] !== undefined && match[3] !== undefined && match[4] !== undefined) {
       return {
         indent: match[1],
         checked: match[3] === 'x',
-        text: match[4]
-      }
+        text: match[4],
+      };
     }
-    return null
+    return null;
   }
 
   function getSectionBlockIds(hoveredBlockId: string | null): Set<string> {
-    if (!hoveredBlockId) return new Set()
+    if (!hoveredBlockId) return new Set();
 
-    const blockIndex = blocks.value.findIndex(b => b.id === hoveredBlockId)
-    if (blockIndex === -1) return new Set()
+    const blockIndex = blocks.value.findIndex(b => b.id === hoveredBlockId);
+    if (blockIndex === -1) return new Set();
 
-    const currentBlock = blocks.value[blockIndex]
-    if (!currentBlock) return new Set()
+    const currentBlock = blocks.value[blockIndex];
+    if (!currentBlock) return new Set();
 
-    const currentContent = currentBlock.content.trim()
+    const currentContent = currentBlock.content.trim();
 
     // 見出しレベルを取得
-    const headingMatch = currentContent.match(/^(#{1,6})\s/)
-    if (!headingMatch) return new Set()
+    const headingMatch = currentContent.match(/^(#{1,6})\s/);
+    if (!headingMatch) return new Set();
 
-    const currentLevel = headingMatch[1]?.length ?? 0
-    const ids = new Set<string>([currentBlock.id])
+    const currentLevel = headingMatch[1]?.length ?? 0;
+    const ids = new Set<string>([currentBlock.id]);
 
     // 次の同レベルまたはそれ以上の見出しが現れるまでのブロックを集める
     for (let i = blockIndex + 1; i < blocks.value.length; i++) {
-      const nextBlock = blocks.value[i]
-      if (!nextBlock) continue
+      const nextBlock = blocks.value[i];
+      if (!nextBlock) continue;
 
-      const nextContent = nextBlock.content.trim()
-      const nextHeadingMatch = nextContent.match(/^(#{1,6})\s/)
+      const nextContent = nextBlock.content.trim();
+      const nextHeadingMatch = nextContent.match(/^(#{1,6})\s/);
 
       // 次の見出しが同レベルまたはそれ以上の場合は終了
       if (nextHeadingMatch && (nextHeadingMatch[1]?.length ?? 0) <= currentLevel) {
-        break
+        break;
       }
 
-      ids.add(nextBlock.id)
+      ids.add(nextBlock.id);
     }
 
-    return ids
+    return ids;
   }
 
   return {
@@ -265,6 +272,6 @@ export function useMarkdownBlocks(content: Ref<string>) {
     getBlockType,
     parseCodeBlock,
     parseChecklist,
-    getSectionBlockIds
-  }
+    getSectionBlockIds,
+  };
 }

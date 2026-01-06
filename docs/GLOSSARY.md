@@ -10,8 +10,8 @@ A **Block** is the fundamental unit of content in the editor. Each block represe
 
 ```typescript
 interface Block {
-  id: string      // Unique identifier (e.g., "block-0", "block-1")
-  content: string // Raw markdown content of the block
+  id: string; // Unique identifier (e.g., "block-0", "block-1")
+  content: string; // Raw markdown content of the block
 }
 ```
 
@@ -21,19 +21,19 @@ interface Block {
 
 A **Block Type** categorizes a block based on its markdown content. The editor uses block types to determine how to render and interact with each block.
 
-| Type | Description | Markdown Pattern |
-|------|-------------|------------------|
-| `heading-1` | Level 1 heading | `# Title` |
-| `heading-2` | Level 2 heading | `## Subtitle` |
-| `heading-3` | Level 3 heading | `### Section` |
-| `code-block` | Fenced code block | ` ```lang ... ``` ` |
-| `checklist` | Task list items | `- [ ] Task` or `- [x] Done` |
-| `bullet-list` | Unordered list | `- Item` or `* Item` |
-| `numbered-list` | Ordered list | `1. Item` |
-| `blockquote` | Quote block | `> Quote` |
-| `table` | Markdown table | `\| A \| B \|` |
-| `empty` | Empty line | (blank) |
-| `paragraph` | Regular text | Any other content |
+| Type            | Description       | Markdown Pattern             |
+| --------------- | ----------------- | ---------------------------- |
+| `heading-1`     | Level 1 heading   | `# Title`                    |
+| `heading-2`     | Level 2 heading   | `## Subtitle`                |
+| `heading-3`     | Level 3 heading   | `### Section`                |
+| `code-block`    | Fenced code block | ` ```lang ... ``` `          |
+| `checklist`     | Task list items   | `- [ ] Task` or `- [x] Done` |
+| `bullet-list`   | Unordered list    | `- Item` or `* Item`         |
+| `numbered-list` | Ordered list      | `1. Item`                    |
+| `blockquote`    | Quote block       | `> Quote`                    |
+| `table`         | Markdown table    | `\| A \| B \|`               |
+| `empty`         | Empty line        | (blank)                      |
+| `paragraph`     | Regular text      | Any other content            |
 
 **Usage in code:** `BlockType`, `getBlockType()`
 
@@ -42,13 +42,17 @@ A **Block Type** categorizes a block based on its markdown content. The editor u
 A **Section** is a hierarchical grouping of blocks that starts with a heading and includes all subsequent blocks until the next heading of equal or higher level. Sections are used for operations like "copy section".
 
 **Example:**
-```markdown
-# Section 1       <- Section includes this heading and...
-Paragraph text    <- ...this paragraph
-## Subsection     <- ...and this subsection
-More content      <- ...and this content
 
-# Section 2       <- This starts a new section
+```markdown
+# Section 1 <- Section includes this heading and...
+
+Paragraph text <- ...this paragraph
+
+## Subsection <- ...and this subsection
+
+More content <- ...and this content
+
+# Section 2 <- This starts a new section
 ```
 
 **Usage in code:** `getSectionBlockIds()`
@@ -92,12 +96,12 @@ A **Link Preview** is an enhanced display for URL links, showing OGP (Open Graph
 
 ```typescript
 interface LinkPreview {
-  url: string
-  title: string | null
-  description: string | null
-  image: string | null
-  siteName: string | null
-  favicon: string | null
+  url: string;
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  siteName: string | null;
+  favicon: string | null;
 }
 ```
 
@@ -121,9 +125,9 @@ The **Loading State** for link previews tracks which URLs are currently being fe
 
 ```typescript
 interface HistoryState {
-  content: string
-  editingBlockIndex: number | null
-  cursorPos: number | null
+  content: string;
+  editingBlockIndex: number | null;
+  cursorPos: number | null;
 }
 ```
 
@@ -142,20 +146,20 @@ interface HistoryState {
 
 The **Format Toolbar** provides quick access to text formatting commands. Available formats:
 
-| Format | Description | Markdown |
-|--------|-------------|----------|
-| `bold` | Bold text | `**text**` |
-| `italic` | Italic text | `*text*` |
-| `strikethrough` | Strikethrough | `~~text~~` |
-| `code` | Inline code | `` `code` `` |
-| `link` | Hyperlink | `[text](url)` |
-| `h1` | Heading 1 | `# ` |
-| `h2` | Heading 2 | `## ` |
-| `h3` | Heading 3 | `### ` |
-| `bullet` | Bullet list | `- ` |
-| `numbered` | Numbered list | `1. ` |
-| `checklist` | Checklist | `- [ ] ` |
-| `quote` | Blockquote | `> ` |
+| Format          | Description   | Markdown      |
+| --------------- | ------------- | ------------- |
+| `bold`          | Bold text     | `**text**`    |
+| `italic`        | Italic text   | `*text*`      |
+| `strikethrough` | Strikethrough | `~~text~~`    |
+| `code`          | Inline code   | `` `code` ``  |
+| `link`          | Hyperlink     | `[text](url)` |
+| `h1`            | Heading 1     | `# `          |
+| `h2`            | Heading 2     | `## `         |
+| `h3`            | Heading 3     | `### `        |
+| `bullet`        | Bullet list   | `- `          |
+| `numbered`      | Numbered list | `1. `         |
+| `checklist`     | Checklist     | `- [ ] `      |
+| `quote`         | Blockquote    | `> `          |
 
 **Usage in code:** `useFormatToolbar`, `FormatType`, `applyFormat()`
 
@@ -176,16 +180,16 @@ The **Format Toolbar** provides quick access to text formatting commands. Availa
 
 **Keyboard Shortcuts** provide efficient navigation and editing. Key handlers include:
 
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| Enter | `Enter` | Split block or create new block |
-| Backspace | `Backspace` | Merge with previous block if at start |
-| Tab | `Tab` | Indent list item |
-| Shift+Tab | `Shift+Tab` | Outdent list item |
-| Arrow Up | `ArrowUp` | Navigate to previous block |
-| Arrow Down | `ArrowDown` | Navigate to next block |
-| Undo | `Cmd/Ctrl+Z` | Undo last change |
-| Redo | `Cmd/Ctrl+Shift+Z` | Redo last undone change |
+| Action     | Shortcut           | Description                           |
+| ---------- | ------------------ | ------------------------------------- |
+| Enter      | `Enter`            | Split block or create new block       |
+| Backspace  | `Backspace`        | Merge with previous block if at start |
+| Tab        | `Tab`              | Indent list item                      |
+| Shift+Tab  | `Shift+Tab`        | Outdent list item                     |
+| Arrow Up   | `ArrowUp`          | Navigate to previous block            |
+| Arrow Down | `ArrowDown`        | Navigate to next block                |
+| Undo       | `Cmd/Ctrl+Z`       | Undo last change                      |
+| Redo       | `Cmd/Ctrl+Shift+Z` | Redo last undone change               |
 
 **Usage in code:** `useKeyboardHandler`
 
@@ -225,15 +229,15 @@ The **Table Generator** creates markdown tables from a simple command syntax.
 
 ## Composables Summary
 
-| Composable | Purpose |
-|------------|---------|
-| `useMarkdownBlocks` | Parses content into blocks, determines block types |
-| `useMarkdownRenderer` | Renders blocks to HTML, handles previews |
-| `useBlockEditor` | Manages editing state, handles user interactions |
-| `useLinkPreview` | Fetches and manages link preview data |
-| `useEditorHistory` | Tracks content history for undo/redo |
-| `useFormatToolbar` | Applies text formatting |
-| `useKeyboardHandler` | Handles keyboard shortcuts and navigation |
-| `useTableGenerator` | Generates markdown tables |
-| `useHighlight` | Provides syntax highlighting |
-| `useMarkdownDocument` | Manages document loading and copying |
+| Composable            | Purpose                                            |
+| --------------------- | -------------------------------------------------- |
+| `useMarkdownBlocks`   | Parses content into blocks, determines block types |
+| `useMarkdownRenderer` | Renders blocks to HTML, handles previews           |
+| `useBlockEditor`      | Manages editing state, handles user interactions   |
+| `useLinkPreview`      | Fetches and manages link preview data              |
+| `useEditorHistory`    | Tracks content history for undo/redo               |
+| `useFormatToolbar`    | Applies text formatting                            |
+| `useKeyboardHandler`  | Handles keyboard shortcuts and navigation          |
+| `useTableGenerator`   | Generates markdown tables                          |
+| `useHighlight`        | Provides syntax highlighting                       |
+| `useMarkdownDocument` | Manages document loading and copying               |
