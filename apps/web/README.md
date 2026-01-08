@@ -14,16 +14,16 @@ Live Editor の Web アプリケーションです。Nuxt.js 4 と Vue 3 で構�
 
 ## 依存パッケージ
 
-| パッケージ | 説明 |
-|-----------|------|
-| [@live-editor/core](../../packages/core/README.md) | 型定義・基本 Composables |
-| [@live-editor/code-block](../../packages/code-block/README.md) | コードブロック |
-| [@live-editor/list](../../packages/list/README.md) | リスト・チェックリスト |
-| [@live-editor/table](../../packages/table/README.md) | テーブル |
-| [@live-editor/quote](../../packages/quote/README.md) | 引用 |
-| [@live-editor/link](../../packages/link/README.md) | リンクプレビュー |
-| [@live-editor/history](../../packages/history/README.md) | Undo/Redo |
-| [@live-editor/document](../../packages/document/README.md) | ドキュメント操作 |
+| パッケージ                                                     | 説明                     |
+| -------------------------------------------------------------- | ------------------------ |
+| [@live-editor/core](../../packages/core/README.md)             | 型定義・基本 Composables |
+| [@live-editor/code-block](../../packages/code-block/README.md) | コードブロック           |
+| [@live-editor/list](../../packages/list/README.md)             | リスト・チェックリスト   |
+| [@live-editor/table](../../packages/table/README.md)           | テーブル                 |
+| [@live-editor/quote](../../packages/quote/README.md)           | 引用                     |
+| [@live-editor/link](../../packages/link/README.md)             | リンクプレビュー         |
+| [@live-editor/history](../../packages/history/README.md)       | Undo/Redo                |
+| [@live-editor/document](../../packages/document/README.md)     | ドキュメント操作         |
 
 ## ディレクトリ構成
 
@@ -112,14 +112,14 @@ GET /api/fetch-title?url=https://example.com
 
 **Props:**
 
-| Prop | 型 | 説明 |
-|------|-----|------|
+| Prop         | 型       | 説明                |
+| ------------ | -------- | ------------------- |
 | `modelValue` | `string` | Markdown コンテンツ |
 
 **Events:**
 
-| Event | 引数 | 説明 |
-|-------|------|------|
+| Event               | 引数     | 説明                       |
+| ------------------- | -------- | -------------------------- |
 | `update:modelValue` | `string` | コンテンツが変更されたとき |
 
 **使用例:**

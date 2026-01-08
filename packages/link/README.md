@@ -10,23 +10,23 @@ pnpm add @live-editor/core @live-editor/link
 
 ## 機能一覧
 
-| 機能 | 説明 |
-|------|------|
-| `useLinkPreview` | リンクプレビューのフェッチと処理 |
+| 機能                     | 説明                               |
+| ------------------------ | ---------------------------------- |
+| `useLinkPreview`         | リンクプレビューのフェッチと処理   |
 | `useLinkPreviewRenderer` | プレビューカードのHTMLレンダリング |
 
 ## 型定義
 
 ### LinkPreview
 
-| プロパティ | 型 | 説明 |
-|-----------|-----|------|
-| `url` | `string` | リンクURL |
-| `title` | `string \| null` | ページタイトル |
-| `description` | `string \| null` | ページ説明 |
-| `image` | `string \| null` | OGP画像URL |
-| `siteName` | `string \| null` | サイト名 |
-| `favicon` | `string \| null` | ファビコンURL |
+| プロパティ    | 型               | 説明           |
+| ------------- | ---------------- | -------------- |
+| `url`         | `string`         | リンクURL      |
+| `title`       | `string \| null` | ページタイトル |
+| `description` | `string \| null` | ページ説明     |
+| `image`       | `string \| null` | OGP画像URL     |
+| `siteName`    | `string \| null` | サイト名       |
+| `favicon`     | `string \| null` | ファビコンURL  |
 
 ### LinkPreviewFetcher
 
@@ -49,10 +49,7 @@ import { useLinkPreview, type LinkPreview } from '@live-editor/link';
 const linkPreviews = ref(new Map<string, LinkPreview>());
 const loadingUrls = ref(new Set<string>());
 
-const { fetchLinkPreview, processUrlBlock } = useLinkPreview(
-  linkPreviews,
-  loadingUrls
-);
+const { fetchLinkPreview, processUrlBlock } = useLinkPreview(linkPreviews, loadingUrls);
 
 // 単純にOGP情報を取得
 const preview = await fetchLinkPreview('https://example.com');
@@ -63,18 +60,18 @@ await processUrlBlock(url, blocks, updateBlock, renderBlock);
 
 #### 引数
 
-| 引数 | 型 | 説明 |
-|------|-----|------|
-| `linkPreviews` | `Ref<Map<string, LinkPreview>>` | プレビューデータのキャッシュ |
-| `loadingUrls` | `Ref<Set<string>>` | ローディング中のURL |
-| `fetcher` | `LinkPreviewFetcher` | カスタムフェッチャー（省略可） |
+| 引数           | 型                              | 説明                           |
+| -------------- | ------------------------------- | ------------------------------ |
+| `linkPreviews` | `Ref<Map<string, LinkPreview>>` | プレビューデータのキャッシュ   |
+| `loadingUrls`  | `Ref<Set<string>>`              | ローディング中のURL            |
+| `fetcher`      | `LinkPreviewFetcher`            | カスタムフェッチャー（省略可） |
 
 #### 戻り値
 
-| プロパティ | 型 | 説明 |
-|-----------|-----|------|
-| `fetchLinkPreview` | `(url: string) => Promise<LinkPreview \| null>` | OGP情報をフェッチ |
-| `processUrlBlock` | `(url, blocks, updateBlock, renderBlock) => Promise<void>` | URLブロックを処理 |
+| プロパティ         | 型                                                         | 説明              |
+| ------------------ | ---------------------------------------------------------- | ----------------- |
+| `fetchLinkPreview` | `(url: string) => Promise<LinkPreview \| null>`            | OGP情報をフェッチ |
+| `processUrlBlock`  | `(url, blocks, updateBlock, renderBlock) => Promise<void>` | URLブロックを処理 |
 
 ---
 
@@ -97,24 +94,24 @@ const previewHtml = renderLinkPreview('https://example.com', {
   description: 'サイトの説明',
   image: 'https://example.com/og.png',
   siteName: 'Example',
-  favicon: 'https://example.com/favicon.ico'
+  favicon: 'https://example.com/favicon.ico',
 });
 ```
 
 #### 戻り値
 
-| プロパティ | 型 | 説明 |
-|-----------|-----|------|
-| `renderLoadingPreview` | `(url: string) => string` | ローディングスケルトンを生成 |
-| `renderLinkPreview` | `(url: string, preview: LinkPreview) => string` | プレビューカードを生成 |
+| プロパティ             | 型                                              | 説明                         |
+| ---------------------- | ----------------------------------------------- | ---------------------------- |
+| `renderLoadingPreview` | `(url: string) => string`                       | ローディングスケルトンを生成 |
+| `renderLinkPreview`    | `(url: string, preview: LinkPreview) => string` | プレビューカードを生成       |
 
 ## APIエンドポイント
 
 デフォルトのフェッチャーは `/api/fetch-title` エンドポイントを使用します。
 
-| パラメータ | 型 | 説明 |
-|-----------|-----|------|
-| `url` | `string` | 取得対象のURL（クエリパラメータ） |
+| パラメータ | 型       | 説明                              |
+| ---------- | -------- | --------------------------------- |
+| `url`      | `string` | 取得対象のURL（クエリパラメータ） |
 
 ### レスポンス形式
 
@@ -130,25 +127,25 @@ const previewHtml = renderLinkPreview('https://example.com', {
 
 ## 関連パッケージ
 
-| パッケージ | 説明 |
-|-----------|------|
+| パッケージ                             | 説明                       |
+| -------------------------------------- | -------------------------- |
 | [@live-editor/core](../core/README.md) | 型定義・基本機能（依存先） |
 
 ## 依存関係
 
-| パッケージ | バージョン | 種別 |
-|-----------|-----------|------|
-| `@live-editor/core` | workspace:* | dependency |
-| `vue` | ^3.5.0 | peer dependency |
+| パッケージ          | バージョン   | 種別            |
+| ------------------- | ------------ | --------------- |
+| `@live-editor/core` | workspace:\* | dependency      |
+| `vue`               | ^3.5.0       | peer dependency |
 
 ## 開発コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm build` | ビルド |
-| `pnpm dev` | 開発モード（ウォッチ） |
-| `pnpm test` | テスト（ウォッチモード） |
-| `pnpm test:run` | テスト（単発実行） |
+| コマンド        | 説明                     |
+| --------------- | ------------------------ |
+| `pnpm build`    | ビルド                   |
+| `pnpm dev`      | 開発モード（ウォッチ）   |
+| `pnpm test`     | テスト（ウォッチモード） |
+| `pnpm test:run` | テスト（単発実行）       |
 
 ## ライセンス
 

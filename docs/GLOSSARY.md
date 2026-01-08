@@ -21,19 +21,19 @@ interface Block {
 
 **Block Type** は、Markdown コンテンツに基づいてブロックを分類します。エディタはブロックタイプを使用して、各ブロックのレンダリング方法とインタラクション方法を決定します。
 
-| タイプ           | 説明               | Markdown パターン            |
-| --------------- | ----------------- | ---------------------------- |
-| `heading-1`     | レベル 1 見出し    | `# Title`                    |
-| `heading-2`     | レベル 2 見出し    | `## Subtitle`                |
-| `heading-3`     | レベル 3 見出し    | `### Section`                |
-| `code-block`    | フェンス付きコードブロック | ` ```lang ... ``` `    |
-| `checklist`     | タスクリスト項目   | `- [ ] Task` または `- [x] Done` |
-| `bullet-list`   | 箇条書きリスト     | `- Item` または `* Item`     |
-| `numbered-list` | 番号付きリスト     | `1. Item`                    |
-| `blockquote`    | 引用ブロック       | `> Quote`                    |
-| `table`         | Markdown テーブル  | `\| A \| B \|`               |
-| `empty`         | 空行              | （空白）                      |
-| `paragraph`     | 通常のテキスト     | その他のコンテンツ            |
+| タイプ          | 説明                       | Markdown パターン                |
+| --------------- | -------------------------- | -------------------------------- |
+| `heading-1`     | レベル 1 見出し            | `# Title`                        |
+| `heading-2`     | レベル 2 見出し            | `## Subtitle`                    |
+| `heading-3`     | レベル 3 見出し            | `### Section`                    |
+| `code-block`    | フェンス付きコードブロック | ` ```lang ... ``` `              |
+| `checklist`     | タスクリスト項目           | `- [ ] Task` または `- [x] Done` |
+| `bullet-list`   | 箇条書きリスト             | `- Item` または `* Item`         |
+| `numbered-list` | 番号付きリスト             | `1. Item`                        |
+| `blockquote`    | 引用ブロック               | `> Quote`                        |
+| `table`         | Markdown テーブル          | `\| A \| B \|`                   |
+| `empty`         | 空行                       | （空白）                         |
+| `paragraph`     | 通常のテキスト             | その他のコンテンツ               |
 
 **コードでの使用:** `BlockType`, `getBlockType()`
 
@@ -146,20 +146,20 @@ interface HistoryState {
 
 **Format Toolbar** はテキストフォーマットコマンドへのクイックアクセスを提供します。利用可能なフォーマット：
 
-| フォーマット     | 説明           | Markdown       |
-| --------------- | ------------- | -------------- |
-| `bold`          | 太字テキスト   | `**text**`     |
-| `italic`        | 斜体テキスト   | `*text*`       |
-| `strikethrough` | 取り消し線     | `~~text~~`     |
+| フォーマット    | 説明             | Markdown      |
+| --------------- | ---------------- | ------------- |
+| `bold`          | 太字テキスト     | `**text**`    |
+| `italic`        | 斜体テキスト     | `*text*`      |
+| `strikethrough` | 取り消し線       | `~~text~~`    |
 | `code`          | インラインコード | `` `code` ``  |
-| `link`          | ハイパーリンク | `[text](url)`  |
-| `h1`            | 見出し 1       | `# `           |
-| `h2`            | 見出し 2       | `## `          |
-| `h3`            | 見出し 3       | `### `         |
-| `bullet`        | 箇条書きリスト | `- `           |
-| `numbered`      | 番号付きリスト | `1. `          |
-| `checklist`     | チェックリスト | `- [ ] `       |
-| `quote`         | 引用           | `> `           |
+| `link`          | ハイパーリンク   | `[text](url)` |
+| `h1`            | 見出し 1         | `# `          |
+| `h2`            | 見出し 2         | `## `         |
+| `h3`            | 見出し 3         | `### `        |
+| `bullet`        | 箇条書きリスト   | `- `          |
+| `numbered`      | 番号付きリスト   | `1. `         |
+| `checklist`     | チェックリスト   | `- [ ] `      |
+| `quote`         | 引用             | `> `          |
 
 **コードでの使用:** `useFormatToolbar`, `FormatType`, `applyFormat()`
 
@@ -180,16 +180,16 @@ interface HistoryState {
 
 **Keyboard Shortcuts** は効率的なナビゲーションと編集を提供します。キーハンドラには以下が含まれます：
 
-| アクション     | ショートカット      | 説明                              |
-| ------------- | ------------------ | --------------------------------- |
-| Enter         | `Enter`            | ブロックを分割または新規ブロック作成 |
-| Backspace     | `Backspace`        | 先頭で前のブロックと結合           |
-| Tab           | `Tab`              | リスト項目をインデント             |
-| Shift+Tab     | `Shift+Tab`        | リスト項目をアウトデント           |
-| Arrow Up      | `ArrowUp`          | 前のブロックに移動                |
-| Arrow Down    | `ArrowDown`        | 次のブロックに移動                |
-| Undo          | `Cmd/Ctrl+Z`       | 最後の変更を元に戻す              |
-| Redo          | `Cmd/Ctrl+Shift+Z` | 最後に元に戻した変更をやり直す     |
+| アクション | ショートカット     | 説明                                 |
+| ---------- | ------------------ | ------------------------------------ |
+| Enter      | `Enter`            | ブロックを分割または新規ブロック作成 |
+| Backspace  | `Backspace`        | 先頭で前のブロックと結合             |
+| Tab        | `Tab`              | リスト項目をインデント               |
+| Shift+Tab  | `Shift+Tab`        | リスト項目をアウトデント             |
+| Arrow Up   | `ArrowUp`          | 前のブロックに移動                   |
+| Arrow Down | `ArrowDown`        | 次のブロックに移動                   |
+| Undo       | `Cmd/Ctrl+Z`       | 最後の変更を元に戻す                 |
+| Redo       | `Cmd/Ctrl+Shift+Z` | 最後に元に戻した変更をやり直す       |
 
 **コードでの使用:** `useKeyboardHandler`
 
@@ -229,15 +229,15 @@ interface HistoryState {
 
 ## Composables サマリー
 
-| Composable             | 目的                                               |
-| --------------------- | -------------------------------------------------- |
-| `useMarkdownBlocks`   | コンテンツをブロックに解析、ブロックタイプを決定      |
-| `useMarkdownRenderer` | ブロックを HTML にレンダリング、プレビューを処理     |
-| `useBlockEditor`      | 編集状態を管理、ユーザーインタラクションを処理        |
-| `useLinkPreview`      | リンクプレビューデータを取得・管理                   |
-| `useEditorHistory`    | Undo/Redo のためのコンテンツ履歴を追跡              |
-| `useFormatToolbar`    | テキストフォーマットを適用                          |
-| `useKeyboardHandler`  | キーボードショートカットとナビゲーションを処理        |
-| `useTableGenerator`   | Markdown テーブルを生成                            |
-| `useHighlight`        | 構文ハイライトを提供                               |
-| `useMarkdownDocument` | ドキュメントの読み込みとコピーを管理                 |
+| Composable            | 目的                                             |
+| --------------------- | ------------------------------------------------ |
+| `useMarkdownBlocks`   | コンテンツをブロックに解析、ブロックタイプを決定 |
+| `useMarkdownRenderer` | ブロックを HTML にレンダリング、プレビューを処理 |
+| `useBlockEditor`      | 編集状態を管理、ユーザーインタラクションを処理   |
+| `useLinkPreview`      | リンクプレビューデータを取得・管理               |
+| `useEditorHistory`    | Undo/Redo のためのコンテンツ履歴を追跡           |
+| `useFormatToolbar`    | テキストフォーマットを適用                       |
+| `useKeyboardHandler`  | キーボードショートカットとナビゲーションを処理   |
+| `useTableGenerator`   | Markdown テーブルを生成                          |
+| `useHighlight`        | 構文ハイライトを提供                             |
+| `useMarkdownDocument` | ドキュメントの読み込みとコピーを管理             |

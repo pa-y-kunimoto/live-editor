@@ -69,7 +69,7 @@ export function useTableCommand(): CommandHandler {
     },
 
     execute(context: CommandContext): void {
-      const { content, blockId, textarea, updateBlock, adjustTextareaHeight, blockRefs } = context;
+      const { content, blockId, updateBlock, adjustTextareaHeight, blockRefs } = context;
       const parsed = parseTableCommand(content.trim());
 
       if (!parsed) return;

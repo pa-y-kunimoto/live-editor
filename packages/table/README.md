@@ -10,11 +10,11 @@ pnpm add @live-editor/core @live-editor/table
 
 ## 機能一覧
 
-| 機能 | 説明 |
-|------|------|
-| `useTableGenerator` | テーブルMarkdownの生成 |
-| `useTableCommand` | `/table` コマンドのハンドラー |
-| `useTableRenderer` | テーブルをHTMLにレンダリング |
+| 機能                | 説明                          |
+| ------------------- | ----------------------------- |
+| `useTableGenerator` | テーブルMarkdownの生成        |
+| `useTableCommand`   | `/table` コマンドのハンドラー |
+| `useTableRenderer`  | テーブルをHTMLにレンダリング  |
 
 ## 使い方
 
@@ -42,17 +42,17 @@ const parsed = parseTableCommand('/table 3 4');
 
 #### 戻り値
 
-| プロパティ | 型 | 説明 |
-|-----------|-----|------|
-| `generateTableMarkdown` | `(rows: number, cols: number) => string` | テーブルMarkdownを生成 |
-| `parseTableCommand` | `(content: string) => { rows, cols } \| null` | `/table` コマンドを解析 |
+| プロパティ              | 型                                            | 説明                    |
+| ----------------------- | --------------------------------------------- | ----------------------- |
+| `generateTableMarkdown` | `(rows: number, cols: number) => string`      | テーブルMarkdownを生成  |
+| `parseTableCommand`     | `(content: string) => { rows, cols } \| null` | `/table` コマンドを解析 |
 
 #### テーブルサイズの制限
 
-| 項目 | 最小 | 最大 |
-|------|------|------|
-| 行数（rows） | 1 | 20 |
-| 列数（cols） | 1 | 10 |
+| 項目         | 最小 | 最大 |
+| ------------ | ---- | ---- |
+| 行数（rows） | 1    | 20   |
+| 列数（cols） | 1    | 10   |
 
 ---
 
@@ -78,14 +78,14 @@ const { handleKeydown } = useKeyboardHandler({
 
 #### コマンド形式
 
-| 形式 | 説明 |
-|------|------|
+| 形式               | 説明                       |
+| ------------------ | -------------------------- |
 | `/table 行数 列数` | 指定サイズのテーブルを生成 |
 
 #### 使用例
 
-| コマンド | 結果 |
-|---------|------|
+| コマンド     | 結果             |
+| ------------ | ---------------- |
 | `/table 3 4` | 3行4列のテーブル |
 | `/table 5 2` | 5行2列のテーブル |
 
@@ -105,32 +105,32 @@ const html = renderTable('| A | B |\n| --- | --- |\n| 1 | 2 |');
 
 #### 戻り値
 
-| プロパティ | 型 | 説明 |
-|-----------|-----|------|
+| プロパティ    | 型                            | 説明                         |
+| ------------- | ----------------------------- | ---------------------------- |
 | `renderTable` | `(content: string) => string` | テーブルをHTMLにレンダリング |
 
 ## 関連パッケージ
 
-| パッケージ | 説明 |
-|-----------|------|
+| パッケージ                             | 説明                             |
+| -------------------------------------- | -------------------------------- |
 | [@live-editor/core](../core/README.md) | 型定義・CommandHandler（依存先） |
 
 ## 依存関係
 
-| パッケージ | バージョン | 種別 |
-|-----------|-----------|------|
-| `@live-editor/core` | workspace:* | dependency |
-| `marked` | ^15.0.12 | dependency |
-| `vue` | ^3.5.17 | dependency |
+| パッケージ          | バージョン   | 種別       |
+| ------------------- | ------------ | ---------- |
+| `@live-editor/core` | workspace:\* | dependency |
+| `marked`            | ^15.0.12     | dependency |
+| `vue`               | ^3.5.17      | dependency |
 
 ## 開発コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm build` | ビルド |
-| `pnpm dev` | 開発モード（ウォッチ） |
-| `pnpm test` | テスト（ウォッチモード） |
-| `pnpm test:run` | テスト（単発実行） |
+| コマンド        | 説明                     |
+| --------------- | ------------------------ |
+| `pnpm build`    | ビルド                   |
+| `pnpm dev`      | 開発モード（ウォッチ）   |
+| `pnpm test`     | テスト（ウォッチモード） |
+| `pnpm test:run` | テスト（単発実行）       |
 
 ## ライセンス
 

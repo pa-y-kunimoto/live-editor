@@ -18,16 +18,16 @@ packages/
 
 ## パッケージ一覧
 
-| パッケージ | 説明 | 依存先 |
-|-----------|------|--------|
-| [@live-editor/core](./core/README.md) | 型定義、ブロック解析、エディター機能、レンダリング基盤 | - |
-| [@live-editor/code-block](./code-block/README.md) | コードブロックの構文ハイライト・レンダリング | core |
-| [@live-editor/list](./list/README.md) | 箇条書き・番号付き・チェックリストのレンダリング | core |
-| [@live-editor/table](./table/README.md) | テーブル生成・レンダリング、`/table`コマンド | core |
-| [@live-editor/quote](./quote/README.md) | 引用ブロックのレンダリング | core |
-| [@live-editor/link](./link/README.md) | リンクプレビュー（OGP）機能 | core |
-| [@live-editor/history](./history/README.md) | Undo/Redo履歴管理 | - |
-| [@live-editor/document](./document/README.md) | ドキュメント操作・クリップボードコピー | - |
+| パッケージ                                        | 説明                                                   | 依存先 |
+| ------------------------------------------------- | ------------------------------------------------------ | ------ |
+| [@live-editor/core](./core/README.md)             | 型定義、ブロック解析、エディター機能、レンダリング基盤 | -      |
+| [@live-editor/code-block](./code-block/README.md) | コードブロックの構文ハイライト・レンダリング           | core   |
+| [@live-editor/list](./list/README.md)             | 箇条書き・番号付き・チェックリストのレンダリング       | core   |
+| [@live-editor/table](./table/README.md)           | テーブル生成・レンダリング、`/table`コマンド           | core   |
+| [@live-editor/quote](./quote/README.md)           | 引用ブロックのレンダリング                             | core   |
+| [@live-editor/link](./link/README.md)             | リンクプレビュー（OGP）機能                            | core   |
+| [@live-editor/history](./history/README.md)       | Undo/Redo履歴管理                                      | -      |
+| [@live-editor/document](./document/README.md)     | ドキュメント操作・クリップボードコピー                 | -      |
 
 ## 依存関係図
 
@@ -105,11 +105,11 @@ import { useMarkdownDocument } from '@live-editor/document';
 
 ## 開発コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm -r build` | 全パッケージをビルド |
+| コマンド           | 説明                       |
+| ------------------ | -------------------------- |
+| `pnpm -r build`    | 全パッケージをビルド       |
 | `pnpm -r test:run` | 全パッケージのテストを実行 |
-| `pnpm -r lint` | 全パッケージのLintを実行 |
+| `pnpm -r lint`     | 全パッケージのLintを実行   |
 
 ## 新しいパッケージの追加
 

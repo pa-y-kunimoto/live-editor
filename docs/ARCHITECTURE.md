@@ -181,16 +181,16 @@ graph TD
 
 ### パッケージ詳細
 
-| パッケージ                  | 目的                         | 主なエクスポート                                                |
-| --------------------------- | ---------------------------- | --------------------------------------------------------------- |
-| `@live-editor/core`         | 型定義・基本 Composables     | `useMarkdownBlocks`, `useBlockEditor`, `useKeyboardHandler`, `useFormatToolbar`, `useMarkdownRenderer`, `Block`, `BlockType` |
-| `@live-editor/code-block`   | コードブロックハイライト     | `useHighlight`, `useCodeBlockRenderer`                          |
-| `@live-editor/list`         | リスト・チェックリスト       | `useChecklistRenderer`, `useListRenderer`                       |
-| `@live-editor/table`        | テーブル生成・レンダリング   | `useTableGenerator`, `useTableCommand`, `useTableRenderer`      |
-| `@live-editor/quote`        | 引用ブロック                 | `useQuoteRenderer`                                              |
-| `@live-editor/link`         | リンクプレビュー（OGP）      | `useLinkPreview`, `useLinkPreviewRenderer`                      |
-| `@live-editor/history`      | Undo/Redo 履歴管理           | `useEditorHistory`                                              |
-| `@live-editor/document`     | ドキュメント操作             | `useMarkdownDocument`                                           |
+| パッケージ                | 目的                       | 主なエクスポート                                                                                                             |
+| ------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `@live-editor/core`       | 型定義・基本 Composables   | `useMarkdownBlocks`, `useBlockEditor`, `useKeyboardHandler`, `useFormatToolbar`, `useMarkdownRenderer`, `Block`, `BlockType` |
+| `@live-editor/code-block` | コードブロックハイライト   | `useHighlight`, `useCodeBlockRenderer`                                                                                       |
+| `@live-editor/list`       | リスト・チェックリスト     | `useChecklistRenderer`, `useListRenderer`                                                                                    |
+| `@live-editor/table`      | テーブル生成・レンダリング | `useTableGenerator`, `useTableCommand`, `useTableRenderer`                                                                   |
+| `@live-editor/quote`      | 引用ブロック               | `useQuoteRenderer`                                                                                                           |
+| `@live-editor/link`       | リンクプレビュー（OGP）    | `useLinkPreview`, `useLinkPreviewRenderer`                                                                                   |
+| `@live-editor/history`    | Undo/Redo 履歴管理         | `useEditorHistory`                                                                                                           |
+| `@live-editor/document`   | ドキュメント操作           | `useMarkdownDocument`                                                                                                        |
 
 ### データフロー
 
@@ -237,16 +237,16 @@ graph TD
 
 ```typescript
 // リクエスト
-GET /api/fetch-title?url=https://example.com
-
-// レスポンス
-{
-  title: 'Example Domain',
-  description: 'This domain is for use in examples...',
-  image: 'https://example.com/og-image.png',
-  siteName: 'Example',
-  favicon: 'https://example.com/favicon.ico'
-}
+GET / api / fetch - title
+  ? (url = https) //example.com
+  : // レスポンス
+    {
+      title: 'Example Domain',
+      description: 'This domain is for use in examples...',
+      image: 'https://example.com/og-image.png',
+      siteName: 'Example',
+      favicon: 'https://example.com/favicon.ico',
+    };
 ```
 
 ## 設計原則

@@ -32,9 +32,7 @@ export function isChecklistBlock(content: string): boolean {
     lines.every(line => {
       const trimmed = line.trim();
       return (
-        trimmed === '' ||
-        trimmed.match(/^[-*+]\s\[[ x]\]\s/) ||
-        line.match(/^\s+[-*+]\s\[[ x]\]\s/)
+        trimmed === '' || trimmed.match(/^[-*+]\s\[[ x]\]\s/) || line.match(/^\s+[-*+]\s\[[ x]\]\s/)
       );
     }) && lines.some(line => line.match(/[-*+]\s\[[ x]\]\s/))
   );
