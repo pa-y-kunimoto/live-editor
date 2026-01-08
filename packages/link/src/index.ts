@@ -4,30 +4,13 @@
  */
 
 import { nextTick, type Ref } from 'vue';
-import type { Block } from '@live-editor/core';
+import { escapeHtml, type Block, type LinkPreview } from '@live-editor/core';
 
-export interface LinkPreview {
-  url: string;
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  siteName: string | null;
-  favicon: string | null;
-}
+// Re-export LinkPreview type for convenience
+export type { LinkPreview } from '@live-editor/core';
 
 export interface LinkPreviewFetcher {
   (url: string): Promise<LinkPreview | null>;
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /**

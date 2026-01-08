@@ -35,12 +35,18 @@ const {
   getRenderedBlock,
   watchBlocks
 } = useMarkdownRenderer({
-  parseCodeBlock,
-  renderCodeBlock,
-  isChecklistBlock,
-  renderChecklist,
-  renderLoadingPreview,
-  renderLinkPreview,
+  codeBlock: {
+    parse: parseCodeBlock,
+    render: renderCodeBlock,
+  },
+  checklist: {
+    isChecklist: isChecklistBlock,
+    render: renderChecklist,
+  },
+  linkPreview: {
+    renderLoading: renderLoadingPreview,
+    render: renderLinkPreview,
+  },
   parseMarkdown: (c: string) => marked.parse(c, { async: false }) as string,
 })
 

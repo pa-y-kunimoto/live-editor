@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
-import type { Block } from './index';
+import type { Block } from './types';
+import { escapeHtml } from './utils';
 
 /**
  * リンクプレビュー情報
@@ -14,24 +15,39 @@ export interface LinkPreview {
 }
 
 /**
+ * コードブロックレンダラーインターフェース
+ */
+export interface CodeBlockRenderer {
+  parse: (content: string) => { lang: string; code: string } | null;
+  render: (content: string) => string | null;
+}
+
+/**
+ * チェックリストレンダラーインターフェース
+ */
+export interface ChecklistRenderer {
+  isChecklist: (content: string) => boolean;
+  render: (block: Block) => string | null;
+}
+
+/**
+ * リンクプレビューレンダラーインターフェース
+ */
+export interface LinkPreviewRenderer {
+  renderLoading: (url: string) => string;
+  render: (url: string, preview: LinkPreview) => string;
+}
+
+/**
  * 注入可能なレンダラーのインターフェース
  */
 export interface BlockRenderers {
-  /** コードブロックの解析 */
-  parseCodeBlock?: (content: string) => { language: string; code: string } | null;
-  /** コードブロックのHTML生成 */
-  renderCodeBlock?: (content: string) => string | null;
-
-  /** チェックリストブロックかどうかの判定 */
-  isChecklistBlock?: (content: string) => boolean;
-  /** チェックリストのHTML生成 */
-  renderChecklist?: (block: Block) => string | null;
-
-  /** ローディング中のリンクプレビューHTML生成 */
-  renderLoadingPreview?: (url: string) => string;
-  /** リンクプレビューカードのHTML生成 */
-  renderLinkPreview?: (url: string, preview: LinkPreview) => string;
-
+  /** コードブロックレンダラー */
+  codeBlock?: CodeBlockRenderer;
+  /** チェックリストレンダラー */
+  checklist?: ChecklistRenderer;
+  /** リンクプレビューレンダラー */
+  linkPreview?: LinkPreviewRenderer;
   /** Markdown→HTML変換 */
   parseMarkdown?: (content: string) => string;
 }
@@ -53,10 +69,10 @@ export function useMarkdownRenderer(renderers: BlockRenderers = {}) {
     }
 
     // コードブロック（レンダラーが注入されていれば使用）
-    if (renderers.parseCodeBlock && renderers.renderCodeBlock) {
-      const codeInfo = renderers.parseCodeBlock(content);
+    if (renderers.codeBlock) {
+      const codeInfo = renderers.codeBlock.parse(content);
       if (codeInfo) {
-        const codeHtml = renderers.renderCodeBlock(content);
+        const codeHtml = renderers.codeBlock.render(content);
         if (codeHtml) {
           highlightedBlocks.value.set(block.id, codeHtml);
           return;
@@ -65,9 +81,9 @@ export function useMarkdownRenderer(renderers: BlockRenderers = {}) {
     }
 
     // チェックリスト（レンダラーが注入されていれば使用）
-    if (renderers.isChecklistBlock && renderers.renderChecklist) {
-      if (renderers.isChecklistBlock(content)) {
-        const checklistHtml = renderers.renderChecklist(block);
+    if (renderers.checklist) {
+      if (renderers.checklist.isChecklist(content)) {
+        const checklistHtml = renderers.checklist.render(block);
         if (checklistHtml) {
           highlightedBlocks.value.set(block.id, checklistHtml);
           return;
@@ -85,12 +101,12 @@ export function useMarkdownRenderer(renderers: BlockRenderers = {}) {
     if (linkOnlyMatch && linkOnlyMatch[2]) {
       const url = linkOnlyMatch[2];
       // ローディング中の場合はスケルトンを表示
-      if (loadingUrls.value.has(url) && renderers.renderLoadingPreview) {
-        html += renderers.renderLoadingPreview(url);
-      } else if (renderers.renderLinkPreview) {
+      if (loadingUrls.value.has(url) && renderers.linkPreview) {
+        html += renderers.linkPreview.renderLoading(url);
+      } else if (renderers.linkPreview) {
         const preview = linkPreviews.value.get(url);
         if (preview && preview.description) {
-          html += renderers.renderLinkPreview(url, preview);
+          html += renderers.linkPreview.render(url, preview);
         }
       }
     }
@@ -122,16 +138,4 @@ export function useMarkdownRenderer(renderers: BlockRenderers = {}) {
     getRenderedBlock,
     watchBlocks,
   };
-}
-
-/**
- * HTMLエスケープ（フォールバック用）
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }

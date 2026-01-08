@@ -4,6 +4,13 @@
  */
 
 import { computed, type Ref } from 'vue';
+import type { Block, BlockType } from './types';
+
+// Re-export types
+export type { Block, BlockType } from './types';
+
+// Re-export utility functions
+export { escapeHtml } from './utils';
 
 // Re-export editor composables
 export { useBlockEditor } from './useBlockEditor';
@@ -16,26 +23,14 @@ export {
 } from './useKeyboardHandler';
 
 // Re-export renderer composables
-export { useMarkdownRenderer, type BlockRenderers, type LinkPreview } from './useMarkdownRenderer';
-
-// Block types
-export interface Block {
-  id: string;
-  content: string;
-}
-
-export type BlockType =
-  | 'heading-1'
-  | 'heading-2'
-  | 'heading-3'
-  | 'code-block'
-  | 'checklist'
-  | 'bullet-list'
-  | 'numbered-list'
-  | 'blockquote'
-  | 'table'
-  | 'empty'
-  | 'paragraph';
+export {
+  useMarkdownRenderer,
+  type BlockRenderers,
+  type CodeBlockRenderer,
+  type ChecklistRenderer,
+  type LinkPreviewRenderer,
+  type LinkPreview,
+} from './useMarkdownRenderer';
 
 /**
  * Markdown block parsing and management

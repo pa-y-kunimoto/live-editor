@@ -4,62 +4,68 @@ import { useMarkdownRenderer, type BlockRenderers, type LinkPreview, type Block 
 // モックレンダラー
 function createMockRenderers(): BlockRenderers {
   return {
-    parseCodeBlock: (content: string) => {
-      const match = content.match(/^```(\w*)\n([\s\S]*?)\n```$/);
-      if (match) {
-        return { language: match[1] || '', code: match[2] || '' };
-      }
-      return null;
-    },
-    renderCodeBlock: (content: string) => {
-      const match = content.match(/^```(\w*)\n([\s\S]*?)\n```$/);
-      if (match) {
-        const lang = match[1] || '';
-        const code = match[2] || '';
-        const langLabel = lang ? `<span class="code-lang-label">${lang}</span>` : '';
-        return `<div class="code-block-wrapper">${langLabel}<pre class="hljs"><code>${code}</code></pre></div>`;
-      }
-      return null;
-    },
-    isChecklistBlock: (content: string) => {
-      return /^- \[([ x])\]/.test(content);
-    },
-    renderChecklist: (block: Block) => {
-      const lines = block.content.split('\n');
-      const items = lines.map((line, index) => {
-        const match = line.match(/^- \[([ x])\] (.+)$/);
+    codeBlock: {
+      parse: (content: string) => {
+        const match = content.match(/^```(\w*)\n([\s\S]*?)\n```$/);
         if (match) {
-          const checked = match[1] === 'x';
-          const text = match[2];
-          const checkedClass = checked ? ' checked' : '';
-          const checkedAttr = checked ? ' checked' : '';
-          return `<div class="checklist-item${checkedClass}" data-line-index="${index}"><span class="checklist-checkbox"${checkedAttr}></span><span class="checklist-text">${text}</span></div>`;
+          return { lang: match[1] || '', code: match[2] || '' };
         }
-        return line;
-      });
-      return `<div class="checklist">${items.join('')}</div>`;
+        return null;
+      },
+      render: (content: string) => {
+        const match = content.match(/^```(\w*)\n([\s\S]*?)\n```$/);
+        if (match) {
+          const lang = match[1] || '';
+          const code = match[2] || '';
+          const langLabel = lang ? `<span class="code-lang-label">${lang}</span>` : '';
+          return `<div class="code-block-wrapper">${langLabel}<pre class="hljs"><code>${code}</code></pre></div>`;
+        }
+        return null;
+      },
     },
-    renderLoadingPreview: (url: string) => {
-      const hostname = new URL(url).hostname;
-      return `<a href="${url}" class="link-preview-card link-preview-loading"><div class="link-preview-content"><div class="link-preview-title-skeleton"></div><div class="link-preview-description-skeleton"></div><div class="link-preview-site">${hostname}</div></div></a>`;
+    checklist: {
+      isChecklist: (content: string) => {
+        return /^- \[([ x])\]/.test(content);
+      },
+      render: (block: Block) => {
+        const lines = block.content.split('\n');
+        const items = lines.map((line, index) => {
+          const match = line.match(/^- \[([ x])\] (.+)$/);
+          if (match) {
+            const checked = match[1] === 'x';
+            const text = match[2];
+            const checkedClass = checked ? ' checked' : '';
+            const checkedAttr = checked ? ' checked' : '';
+            return `<div class="checklist-item${checkedClass}" data-line-index="${index}"><span class="checklist-checkbox"${checkedAttr}></span><span class="checklist-text">${text}</span></div>`;
+          }
+          return line;
+        });
+        return `<div class="checklist">${items.join('')}</div>`;
+      },
     },
-    renderLinkPreview: (url: string, preview: LinkPreview) => {
-      const escapeHtml = (text: string) =>
-        text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-      const title = preview.title ? escapeHtml(preview.title) : url;
-      const hostname = new URL(url).hostname;
-      const siteName = preview.siteName || hostname;
-      const favicon = preview.favicon
-        ? `<img src="${preview.favicon}" class="link-preview-favicon" />`
-        : '';
-      const description = preview.description
-        ? `<div class="link-preview-description">${escapeHtml(preview.description)}</div>`
-        : '';
-      return `<a href="${url}" class="link-preview-card"><div class="link-preview-content"><div class="link-preview-title">${title}</div>${description}<div class="link-preview-site">${favicon}${siteName}</div></div></a>`;
+    linkPreview: {
+      renderLoading: (url: string) => {
+        const hostname = new URL(url).hostname;
+        return `<a href="${url}" class="link-preview-card link-preview-loading"><div class="link-preview-content"><div class="link-preview-title-skeleton"></div><div class="link-preview-description-skeleton"></div><div class="link-preview-site">${hostname}</div></div></a>`;
+      },
+      render: (url: string, preview: LinkPreview) => {
+        const escapeHtml = (text: string) =>
+          text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        const title = preview.title ? escapeHtml(preview.title) : url;
+        const hostname = new URL(url).hostname;
+        const siteName = preview.siteName || hostname;
+        const favicon = preview.favicon
+          ? `<img src="${preview.favicon}" class="link-preview-favicon" />`
+          : '';
+        const description = preview.description
+          ? `<div class="link-preview-description">${escapeHtml(preview.description)}</div>`
+          : '';
+        return `<a href="${url}" class="link-preview-card"><div class="link-preview-content"><div class="link-preview-title">${title}</div>${description}<div class="link-preview-site">${favicon}${siteName}</div></div></a>`;
+      },
     },
     parseMarkdown: (content: string) => {
       // シンプルなMarkdownパーサーモック
@@ -262,7 +268,7 @@ describe('useMarkdownRenderer', () => {
 
   describe('renderLoadingPreview (via injected renderer)', () => {
     it('should render loading skeleton with hostname', () => {
-      const result = mockRenderers.renderLoadingPreview!('https://example.com/page');
+      const result = mockRenderers.linkPreview!.renderLoading('https://example.com/page');
 
       expect(result).toContain('link-preview-card');
       expect(result).toContain('link-preview-loading');
@@ -283,7 +289,7 @@ describe('useMarkdownRenderer', () => {
         favicon: 'https://example.com/favicon.ico',
       };
 
-      const result = mockRenderers.renderLinkPreview!('https://example.com', preview);
+      const result = mockRenderers.linkPreview!.render('https://example.com', preview);
 
       expect(result).toContain('link-preview-card');
       expect(result).toContain('href="https://example.com"');
@@ -303,7 +309,7 @@ describe('useMarkdownRenderer', () => {
         favicon: null,
       };
 
-      const result = mockRenderers.renderLinkPreview!('https://example.com', preview);
+      const result = mockRenderers.linkPreview!.render('https://example.com', preview);
 
       expect(result).toContain('Example Title');
       expect(result).not.toContain('link-preview-description');
@@ -319,7 +325,7 @@ describe('useMarkdownRenderer', () => {
         favicon: null,
       };
 
-      const result = mockRenderers.renderLinkPreview!('https://example.com', preview);
+      const result = mockRenderers.linkPreview!.render('https://example.com', preview);
 
       expect(result).toContain('https://example.com');
     });
@@ -334,7 +340,7 @@ describe('useMarkdownRenderer', () => {
         favicon: null,
       };
 
-      const result = mockRenderers.renderLinkPreview!('https://example.com', preview);
+      const result = mockRenderers.linkPreview!.render('https://example.com', preview);
 
       expect(result).toContain('example.com');
     });
@@ -349,7 +355,7 @@ describe('useMarkdownRenderer', () => {
         favicon: null,
       };
 
-      const result = mockRenderers.renderLinkPreview!('https://example.com', preview);
+      const result = mockRenderers.linkPreview!.render('https://example.com', preview);
 
       expect(result).not.toContain('<script>');
       expect(result).toContain('&lt;script&gt;');

@@ -4,6 +4,7 @@
  */
 
 import hljs from 'highlight.js/lib/core';
+import { escapeHtml } from '@live-editor/core';
 
 // 言語を個別にインポート
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -100,18 +101,6 @@ const supportedLanguages = [
   'dockerfile',
   'docker',
 ];
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 /**
  * Parse code block content to extract language and code
