@@ -19,6 +19,28 @@ pnpm add @live-editor/core
 | Composable | `useKeyboardHandler`  | キーボードイベント処理（拡張可能）         |
 | Composable | `useFormatToolbar`    | フォーマットツールバー機能                 |
 | Composable | `useMarkdownRenderer` | ブロックをHTMLにレンダリング               |
+| Utility    | `escapeHtml`          | HTML特殊文字をエスケープ                   |
+
+## ユーティリティ関数
+
+### escapeHtml
+
+HTML特殊文字をエスケープします。
+
+```typescript
+import { escapeHtml } from '@live-editor/core';
+
+const safe = escapeHtml('<script>alert("xss")</script>');
+// => '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
+```
+
+| 文字 | エスケープ後 |
+| ---- | ------------ |
+| `&`  | `&amp;`      |
+| `<`  | `&lt;`       |
+| `>`  | `&gt;`       |
+| `"`  | `&quot;`     |
+| `'`  | `&#39;`      |
 
 ## 型定義
 

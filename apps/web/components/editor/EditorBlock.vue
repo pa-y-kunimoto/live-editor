@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Block, BlockType } from '@live-editor/markdown-blocks'
+import type { Block, BlockType } from '@live-editor/core'
 import type { FormatType } from './FormatToolbar.vue'
 import BlockHandle from './BlockHandle.vue'
 import BlockCopyButton from './BlockCopyButton.vue'

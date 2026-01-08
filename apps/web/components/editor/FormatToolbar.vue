@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 
 export type FormatType =
   | 'bold'
@@ -37,6 +36,23 @@ function handleFormat(type: FormatType) {
   } else {
     emit('format', type)
   }
+}
+
+// スピンボタンクリック時にblurが発生してもUIが閉じないように遅延させる
+function handleInputBlur(event: FocusEvent) {
+  // relatedTarget（次にフォーカスされる要素）がtable-input-group内ならignoreBlurを維持
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  const inputGroup = (event.target as HTMLElement)?.closest('.table-input-group')
+
+  if (relatedTarget && inputGroup?.contains(relatedTarget)) {
+    // 同じグループ内の別の要素にフォーカスが移動する場合は何もしない
+    return
+  }
+
+  // 少し遅延させて、スピンボタンクリックの場合に対応
+  setTimeout(() => {
+    emit('ignoreBlur', false)
+  }, 100)
 }
 </script>
 
@@ -103,7 +119,7 @@ function handleFormat(type: FormatType) {
         <line x1="12" y1="3" x2="12" y2="21"></line>
       </svg>
     </button>
-    <div v-if="showTableInput" class="table-input-group" @mousedown.stop>
+    <div v-if="showTableInput" class="table-input-group" @mousedown.stop @mouseup.stop>
       <input
         type="number"
         :value="tableRows"
@@ -113,7 +129,8 @@ function handleFormat(type: FormatType) {
         class="table-input"
         placeholder="行"
         @focus="emit('ignoreBlur', true)"
-        @blur="emit('ignoreBlur', false)"
+        @blur="handleInputBlur"
+        @mousedown.stop
       />
       <span class="table-input-separator">×</span>
       <input
@@ -125,7 +142,8 @@ function handleFormat(type: FormatType) {
         class="table-input"
         placeholder="列"
         @focus="emit('ignoreBlur', true)"
-        @blur="emit('ignoreBlur', false)"
+        @blur="handleInputBlur"
+        @mousedown.stop
       />
       <button @mousedown.prevent="emit('insertTable')" class="toolbar-btn table-insert-btn" title="挿入">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

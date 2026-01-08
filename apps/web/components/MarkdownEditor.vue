@@ -35,12 +35,18 @@ const {
   getRenderedBlock,
   watchBlocks
 } = useMarkdownRenderer({
-  parseCodeBlock,
-  renderCodeBlock,
-  isChecklistBlock,
-  renderChecklist,
-  renderLoadingPreview,
-  renderLinkPreview,
+  codeBlock: {
+    parse: parseCodeBlock,
+    render: renderCodeBlock,
+  },
+  checklist: {
+    isChecklist: isChecklistBlock,
+    render: renderChecklist,
+  },
+  linkPreview: {
+    renderLoading: renderLoadingPreview,
+    render: renderLinkPreview,
+  },
   parseMarkdown: (c: string) => marked.parse(c, { async: false }) as string,
 })
 
@@ -62,7 +68,6 @@ const {
   getTextarea,
   adjustTextareaHeight,
   startEditingByIndex,
-  startEditing,
   stopEditing,
   updateBlock,
   handleBlur: baseHandleBlur,
@@ -288,7 +293,7 @@ function isHeadingBlock(content: string): boolean {
         @blur="handleBlur(block.id)"
         @keydown="handleKeydown($event, block.id, index)"
         @paste="handlePaste($event, block.id)"
-        @start-editing="startEditing(block.id)"
+        @start-editing="startEditingByIndex(index)"
         @checkbox-toggle="toggleCheckbox(block.id, $event)"
         @link-click="handleLinkClick"
         @textarea-mounted="handleTextareaMounted(block.id, $event)"

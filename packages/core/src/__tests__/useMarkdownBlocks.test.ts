@@ -261,6 +261,91 @@ describe('useMarkdownBlocks', () => {
     });
   });
 
+  describe('code block parsing edge cases', () => {
+    it('should NOT merge next block when typing unclosed ``` manually', () => {
+      // Issue: 手入力でコードブロックの```を入力すると次のブロックがコードブロックにまとめられる
+      const content = ref('```\nNext paragraph');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 閉じる```がない場合、開始の```は通常のテキストとして扱われ、
+      // 次の行は別のブロックになる
+      expect(blocks.value).toHaveLength(2);
+      expect(blocks.value[0]?.content).toBe('```');
+      expect(blocks.value[1]?.content).toBe('Next paragraph');
+    });
+
+    it('should NOT treat ```javascript as closing tag', () => {
+      // Issue: ```javascript が閉じタグとして認識されてしまう
+      const content = ref('```\nsome code\n```javascript\nmore code');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 最初の```は閉じられていない（```javascriptは閉じタグではない）
+      // なので通常のテキストとして扱われる
+      expect(blocks.value.length).toBeGreaterThan(1);
+      expect(blocks.value[0]?.content).toBe('```');
+    });
+
+    it('should only treat pure ``` as closing tag', () => {
+      const content = ref('```typescript\nconst x = 1;\n```');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 完全なコードブロック: 開始```typescript と 閉じ```
+      expect(blocks.value).toHaveLength(1);
+      expect(blocks.value[0]?.content).toBe('```typescript\nconst x = 1;\n```');
+    });
+
+    it('should parse complete code block structure created by Enter key', () => {
+      // Enter key押下時に自動生成される構造
+      const content = ref('```\n\n```');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 完全なコードブロックとして1ブロックになる
+      expect(blocks.value).toHaveLength(1);
+      expect(blocks.value[0]?.content).toBe('```\n\n```');
+    });
+
+    it('should parse code block with language and content', () => {
+      const content = ref('```javascript\nconsole.log("hello");\n```');
+      const { blocks } = useMarkdownBlocks(content);
+
+      expect(blocks.value).toHaveLength(1);
+      expect(blocks.value[0]?.content).toContain('```javascript');
+      expect(blocks.value[0]?.content).toContain('console.log');
+      expect(blocks.value[0]?.content).toContain('```');
+    });
+
+    it('should handle multiple code blocks correctly', () => {
+      const content = ref('```js\ncode1\n```\n\n```python\ncode2\n```');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 2つの完全なコードブロック + 空行
+      expect(blocks.value).toHaveLength(3);
+      expect(blocks.value[0]?.content).toBe('```js\ncode1\n```');
+      expect(blocks.value[1]?.content).toBe('');
+      expect(blocks.value[2]?.content).toBe('```python\ncode2\n```');
+    });
+
+    it('should treat unclosed code block opening as regular text', () => {
+      const content = ref('```javascript');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 閉じタグがないので通常テキストとして扱う
+      expect(blocks.value).toHaveLength(1);
+      expect(blocks.value[0]?.content).toBe('```javascript');
+    });
+
+    it('should handle text after unclosed code block', () => {
+      const content = ref('```\ncode line\nmore text');
+      const { blocks } = useMarkdownBlocks(content);
+
+      // 閉じタグがないので、```は通常テキスト、残りは別ブロック
+      expect(blocks.value).toHaveLength(3);
+      expect(blocks.value[0]?.content).toBe('```');
+      expect(blocks.value[1]?.content).toBe('code line');
+      expect(blocks.value[2]?.content).toBe('more text');
+    });
+  });
+
   describe('getSectionBlockIds', () => {
     it('should return empty set for non-heading block', () => {
       const content = ref('Regular text');

@@ -4,6 +4,13 @@
  */
 
 import { computed, type Ref } from 'vue';
+import type { Block, BlockType } from './types';
+
+// Re-export types
+export type { Block, BlockType } from './types';
+
+// Re-export utility functions
+export { escapeHtml } from './utils';
 
 // Re-export editor composables
 export { useBlockEditor } from './useBlockEditor';
@@ -16,26 +23,14 @@ export {
 } from './useKeyboardHandler';
 
 // Re-export renderer composables
-export { useMarkdownRenderer, type BlockRenderers, type LinkPreview } from './useMarkdownRenderer';
-
-// Block types
-export interface Block {
-  id: string;
-  content: string;
-}
-
-export type BlockType =
-  | 'heading-1'
-  | 'heading-2'
-  | 'heading-3'
-  | 'code-block'
-  | 'checklist'
-  | 'bullet-list'
-  | 'numbered-list'
-  | 'blockquote'
-  | 'table'
-  | 'empty'
-  | 'paragraph';
+export {
+  useMarkdownRenderer,
+  type BlockRenderers,
+  type CodeBlockRenderer,
+  type ChecklistRenderer,
+  type LinkPreviewRenderer,
+  type LinkPreview,
+} from './useMarkdownRenderer';
 
 /**
  * Markdown block parsing and management
@@ -154,15 +149,35 @@ export function useMarkdownBlocks(content: Ref<string>) {
       if (trimmed.startsWith('```')) {
         pushBlock();
         const codeBlock = [line];
+        let foundClosing = false;
+        const startIndex = i;
         i++;
         while (i < lines.length) {
           const codeLine = lines[i] ?? '';
-          if (codeLine.trim().startsWith('```')) {
+          // 閉じる```は、```のみの行（言語指定なし）でなければならない
+          // ```javascript などは新しいコードブロックの開始なので閉じタグではない
+          const codeLineTrimmed = codeLine.trim();
+          if (codeLineTrimmed === '```') {
             codeBlock.push(codeLine);
+            foundClosing = true;
+            break;
+          }
+          // 別のコードブロックの開始（```言語名）を見つけた場合は、閉じタグなしとして扱う
+          if (codeLineTrimmed.startsWith('```') && codeLineTrimmed.length > 3) {
             break;
           }
           codeBlock.push(codeLine);
           i++;
+        }
+        // 閉じる```が見つからなかった場合は、開始行だけを通常のテキストとして扱う
+        if (!foundClosing) {
+          result.push({
+            id: `block-${blockId++}`,
+            content: line,
+          });
+          // インデックスを開始位置に戻す（次の行から再処理）
+          i = startIndex;
+          continue;
         }
         result.push({
           id: `block-${blockId++}`,
@@ -199,9 +214,16 @@ export function useMarkdownBlocks(content: Ref<string>) {
         continue;
       }
 
-      currentBlock.push(line);
+      // 通常のテキスト行は各行を独立したブロックとして扱う
+      // これにより、空ブロックに入力しても次のブロックと結合されない
+      pushBlock();
+      result.push({
+        id: `block-${blockId++}`,
+        content: line,
+      });
     }
 
+    // currentBlockは使われなくなったが、念のため残す
     pushBlock();
 
     if (result.length === 0) {

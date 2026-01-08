@@ -45,10 +45,11 @@ export interface KeyboardHandlerDeps {
 export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
   const { commandHandlers = [] } = deps;
 
-  function handleKeydown(event: KeyboardEvent, blockId: string, blockIndex: number) {
+  function handleKeydown(event: KeyboardEvent, blockId: string, _blockIndex: number) {
     const textarea = event.target as HTMLTextAreaElement;
     const {
       blocks,
+      editingBlockIndex,
       editingBlockId,
       blockRefs,
       pendingFocus,
@@ -62,6 +63,10 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
       redo,
       processUrlBlock,
     } = deps;
+
+    // 引数のblockIndexは古い値の可能性があるため、editingBlockIndexを使用
+    const blockIndex = editingBlockIndex.value;
+    if (blockIndex === null) return;
 
     // Cmd+Z (Mac) または Ctrl+Z (Windows/Linux) でUndo
     if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
@@ -139,28 +144,58 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
       }
 
       // コードブロック内では通常の改行を許可し、インデントを維持
+      // ただし、閉じる```がない場合（コードブロック入力開始時）は、
+      // 完全なコードブロック構造を作成する
       if (content.trim().startsWith('```')) {
         event.preventDefault();
 
-        const beforeCursor = content.slice(0, cursorPos);
-        const lastNewlineIndex = beforeCursor.lastIndexOf('\n');
-        const currentLineStart = lastNewlineIndex + 1;
-        const currentLine = content.slice(currentLineStart, cursorPos);
+        // 閉じる```があるかチェック
+        const lines = content.split('\n');
+        const hasClosingBackticks =
+          lines.length > 1 && lines.some((line, index) => index > 0 && line.trim() === '```');
 
-        const indentMatch = currentLine.match(/^(\s*)/);
-        const indent = indentMatch?.[1] ?? '';
+        if (hasClosingBackticks) {
+          // 完全なコードブロック内での改行処理
+          const beforeCursor = content.slice(0, cursorPos);
+          const lastNewlineIndex = beforeCursor.lastIndexOf('\n');
+          const currentLineStart = lastNewlineIndex + 1;
+          const currentLine = content.slice(currentLineStart, cursorPos);
 
-        const newContent = content.slice(0, cursorPos) + '\n' + indent + content.slice(cursorPos);
-        updateBlock(blockId, newContent);
+          const indentMatch = currentLine.match(/^(\s*)/);
+          const indent = indentMatch?.[1] ?? '';
 
-        nextTick(() => {
-          const ta = blockRefs.value.get(blockId);
-          if (ta) {
-            const newCursorPos = cursorPos + 1 + indent.length;
-            ta.setSelectionRange(newCursorPos, newCursorPos);
-            adjustTextareaHeight(ta);
-          }
-        });
+          const newContent = content.slice(0, cursorPos) + '\n' + indent + content.slice(cursorPos);
+          updateBlock(blockId, newContent);
+
+          nextTick(() => {
+            // ブロックIDは再パース後に変わる可能性があるため、editingBlockIdを使用
+            const currentBlockId = editingBlockId.value;
+            if (!currentBlockId) return;
+            const ta = blockRefs.value.get(currentBlockId);
+            if (ta) {
+              const newCursorPos = cursorPos + 1 + indent.length;
+              ta.setSelectionRange(newCursorPos, newCursorPos);
+              adjustTextareaHeight(ta);
+            }
+          });
+        } else {
+          // コードブロック開始のみの場合、閉じる```を追加して完全な構造を作成
+          const newContent = content + '\n\n```';
+          updateBlock(blockId, newContent);
+
+          nextTick(() => {
+            // ブロックIDは再パース後に変わる可能性があるため、editingBlockIdを使用
+            const currentBlockId = editingBlockId.value;
+            if (!currentBlockId) return;
+            const ta = blockRefs.value.get(currentBlockId);
+            if (ta) {
+              // カーソルを開始```の後の行に移動
+              const newCursorPos = content.length + 1;
+              ta.setSelectionRange(newCursorPos, newCursorPos);
+              adjustTextareaHeight(ta);
+            }
+          });
+        }
         return;
       }
 
@@ -211,7 +246,11 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
             blocks,
             emit,
             startEditingByIndex,
-            ignoreBlur
+            ignoreBlur,
+            editingBlockIndex,
+            blockRefs,
+            editingBlockId,
+            adjustTextareaHeight
           );
           return;
         }
@@ -232,7 +271,11 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
             blocks,
             emit,
             startEditingByIndex,
-            ignoreBlur
+            ignoreBlur,
+            editingBlockIndex,
+            blockRefs,
+            editingBlockId,
+            adjustTextareaHeight
           );
           return;
         }
@@ -253,7 +296,11 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
             blocks,
             emit,
             startEditingByIndex,
-            ignoreBlur
+            ignoreBlur,
+            editingBlockIndex,
+            blockRefs,
+            editingBlockId,
+            adjustTextareaHeight
           );
           return;
         }
@@ -275,7 +322,11 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
             blocks,
             emit,
             startEditingByIndex,
-            ignoreBlur
+            ignoreBlur,
+            editingBlockIndex,
+            blockRefs,
+            editingBlockId,
+            adjustTextareaHeight
           );
           return;
         }
@@ -453,8 +504,52 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
     blocks: ComputedRef<Block[]>,
     emit: (event: 'update:modelValue', value: string) => void,
     startEditingByIndex: (index: number, cursorPos?: number) => void,
-    ignoreBlur: Ref<boolean>
+    ignoreBlur: Ref<boolean>,
+    editingBlockIndex: Ref<number | null>,
+    blockRefs: Ref<Map<string, HTMLTextAreaElement>>,
+    editingBlockId: ComputedRef<string | null>,
+    adjustTextareaHeight: (textarea: HTMLTextAreaElement) => void
   ) {
+    const currentLine = lines[currentLineIndex] ?? '';
+    const indentMatch = currentLine.match(/^(\s*)/);
+    const currentIndent = indentMatch?.[1]?.length ?? 0;
+
+    // ネストされたリスト項目（インデントがある場合）は、インデントを減らして親レベルに戻る
+    if (currentIndent >= 2) {
+      const newIndent = Math.max(0, currentIndent - 2);
+      const newLines = [...lines];
+
+      // 空のリスト項目のマーカーを取得
+      const markerMatch = currentLine.trim().match(/^([-*+]|\d+\.)\s/);
+      const marker = markerMatch?.[1] ?? '-';
+
+      // 新しいインデントレベルで空のリスト項目を作成
+      newLines[currentLineIndex] = ' '.repeat(newIndent) + marker + ' ';
+      const newContent = newLines.join('\n');
+
+      const currentBlock = blocks.value[blockIndex];
+      if (!currentBlock) return;
+
+      const newBlocks = [...blocks.value];
+      newBlocks[blockIndex] = { ...currentBlock, content: newContent };
+
+      emit('update:modelValue', newBlocks.map((b: Block) => b.content).join('\n'));
+
+      // 新しいカーソル位置を計算（インデント + マーカー + スペースの後）
+      let newCursorPos = 0;
+      for (let i = 0; i < currentLineIndex; i++) {
+        newCursorPos += (newLines[i]?.length ?? 0) + 1;
+      }
+      newCursorPos += newIndent + marker.length + 1;
+
+      nextTick(() => {
+        startEditingByIndex(blockIndex, newCursorPos);
+        ignoreBlur.value = false;
+      });
+      return;
+    }
+
+    // トップレベルの空リスト項目の場合は、リストから抜けて新しいブロックを作成
     const newLines = [...lines];
     newLines.splice(currentLineIndex, 1);
     const currentBlockContent = newLines.join('\n').trim();
@@ -473,9 +568,25 @@ export function useKeyboardHandler(deps: KeyboardHandlerDeps) {
     emit('update:modelValue', newBlocks.map((b: Block) => b.content).join('\n'));
 
     const nextBlockIndex = currentBlockContent ? blockIndex + 1 : blockIndex;
-    nextTick(() => {
-      startEditingByIndex(nextBlockIndex, 0);
-      ignoreBlur.value = false;
+
+    // Enter処理と同様に、editingBlockIndexを更新してからフォーカス
+    editingBlockIndex.value = nextBlockIndex;
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const nextBlockId = editingBlockId.value;
+        if (nextBlockId) {
+          const ta = blockRefs.value.get(nextBlockId);
+          if (ta) {
+            ta.focus();
+            ta.setSelectionRange(0, 0);
+            adjustTextareaHeight(ta);
+          }
+        }
+        setTimeout(() => {
+          ignoreBlur.value = false;
+        }, 50);
+      });
     });
   }
 

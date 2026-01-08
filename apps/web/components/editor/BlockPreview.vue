@@ -12,10 +12,21 @@ const emit = defineEmits<{
 function handleClick(event: MouseEvent) {
   const target = event.target as HTMLElement
 
+  // チェックボックス自体のクリック
   if (target.tagName === 'INPUT' && target.classList.contains('checklist-checkbox')) {
     event.preventDefault()
     event.stopPropagation()
     const lineIndex = target.getAttribute('data-line-index')
+    emit('checkboxToggle', lineIndex ? parseInt(lineIndex) : 0)
+    return
+  }
+
+  // チェックリストアイテム（行全体）のクリック - チェックボックスをトグル（編集モードに入らない）
+  const checklistItem = target.closest('.checklist-item')
+  if (checklistItem) {
+    event.preventDefault()
+    event.stopPropagation()
+    const lineIndex = checklistItem.getAttribute('data-line-index')
     emit('checkboxToggle', lineIndex ? parseInt(lineIndex) : 0)
     return
   }
