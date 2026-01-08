@@ -1,155 +1,163 @@
-# Quick Start Guide
+# クイックスタートガイド
 
-Get up and running with the live-editor monorepo in minutes.
+live-editor モノレポを数分で起動・実行できるようにします。
 
-## Prerequisites
+## 前提条件
 
-Ensure you have the following installed:
+以下がインストールされていることを確認してください：
 
-- **Node.js** >= 22.0.0 ([Download](https://nodejs.org/))
+- **Node.js** >= 22.0.0 ([ダウンロード](https://nodejs.org/))
 - **pnpm** >= 8.0.0
 
-## Installation
+## インストール
 
-### 1. Install pnpm
+### 1. pnpm のインストール
 
 ```bash
 npm install -g pnpm
 ```
 
-### 2. Clone the repository
+### 2. リポジトリのクローン
 
 ```bash
 git clone https://github.com/pa-y-kunimoto/live-editor.git
 cd live-editor
 ```
 
-### 3. Install dependencies
+### 3. 依存関係のインストール
 
 ```bash
 pnpm install
 ```
 
-This will install dependencies for all packages in the workspace.
+ワークスペース内のすべてのパッケージの依存関係がインストールされます。
 
-### 4. Build all packages
+### 4. 全パッケージのビルド
 
 ```bash
 pnpm build
 ```
 
-## Common Tasks
+## よく使うタスク
 
-### Development
+### 開発
 
-Run all packages in watch mode:
+すべてのパッケージをウォッチモードで実行：
 
 ```bash
 pnpm dev
 ```
 
-### Building
+### ビルド
 
-Build all packages:
+全パッケージをビルド：
 
 ```bash
 pnpm build
 ```
 
-Build a specific package:
+特定のパッケージをビルド：
 
 ```bash
 pnpm --filter @live-editor/core build
 ```
 
-### Testing
+### テスト
 
-Run all tests:
+全テストを実行：
 
 ```bash
 pnpm test
 ```
 
-Test a specific package:
+特定のパッケージのテストを実行：
 
 ```bash
-pnpm --filter @live-editor/web test
+pnpm --filter @live-editor/core test
 ```
 
-### Linting
+### Lint
 
-Check code quality:
+コード品質をチェック：
 
 ```bash
 pnpm lint
 ```
 
-### Formatting
+### フォーマット
 
-Format all code:
+全コードをフォーマット：
 
 ```bash
 pnpm format
 ```
 
-Check formatting without changes:
+変更なしでフォーマットをチェック：
 
 ```bash
 pnpm format:check
 ```
 
-### Clean
+### クリーン
 
-Remove all build artifacts and dependencies:
+全ビルド成果物と依存関係を削除：
 
 ```bash
 pnpm clean
 ```
 
-## Project Structure
+## プロジェクト構成
 
 ```
 live-editor/
+├── apps/
+│   └── web/              # Nuxt.js Web アプリケーション
 ├── packages/
-│   ├── core/          # @live-editor/core - Core utilities
-│   └── web/           # @live-editor/web - Web application
-├── docs/              # Documentation
-├── .github/           # GitHub Actions workflows
-└── ...config files
+│   ├── core/             # @live-editor/core - 型定義・基本機能
+│   ├── code-block/       # @live-editor/code-block - コードブロック
+│   ├── list/             # @live-editor/list - リスト・チェックリスト
+│   ├── table/            # @live-editor/table - テーブル
+│   ├── quote/            # @live-editor/quote - 引用
+│   ├── link/             # @live-editor/link - リンクプレビュー
+│   ├── history/          # @live-editor/history - Undo/Redo
+│   └── document/         # @live-editor/document - ドキュメント操作
+├── docs/                 # ドキュメント
+├── .github/              # GitHub Actions ワークフロー
+└── ...設定ファイル
 ```
 
-## Key Commands Reference
+## 主要コマンドリファレンス
 
-| Command        | Description                            |
-| -------------- | -------------------------------------- |
-| `pnpm install` | Install all dependencies               |
-| `pnpm build`   | Build all packages                     |
-| `pnpm dev`     | Run in development mode                |
-| `pnpm test`    | Run all tests                          |
-| `pnpm lint`    | Lint all code                          |
-| `pnpm format`  | Format all code                        |
-| `pnpm clean`   | Clean build artifacts and node modules |
+| コマンド       | 説明                               |
+| -------------- | ---------------------------------- |
+| `pnpm install` | 全依存関係をインストール           |
+| `pnpm build`   | 全パッケージをビルド               |
+| `pnpm dev`     | 開発モードで実行                   |
+| `pnpm test`    | 全テストを実行                     |
+| `pnpm lint`    | 全コードの Lint を実行             |
+| `pnpm format`  | 全コードをフォーマット             |
+| `pnpm clean`   | ビルド成果物と node_modules を削除 |
 
-## Working with Specific Packages
+## 特定パッケージでの作業
 
-Use the `--filter` flag to run commands on specific packages:
+`--filter` フラグを使用して特定のパッケージでコマンドを実行：
 
 ```bash
-# Install a dependency to core package
-pnpm --filter @live-editor/core add lodash
+# code-block パッケージに依存関係を追加
+pnpm --filter @live-editor/code-block add lodash
 
-# Run dev mode for web package only
-pnpm --filter @live-editor/web dev
+# Web アプリのみ開発モードで実行
+pnpm -C apps/web dev
 
-# Build core package only
+# core パッケージのみビルド
 pnpm --filter @live-editor/core build
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-### Build Errors
+### ビルドエラー
 
-If you encounter build errors, try:
+ビルドエラーが発生した場合：
 
 ```bash
 pnpm clean
@@ -157,49 +165,47 @@ pnpm install
 pnpm build
 ```
 
-### Dependency Issues
+### 依存関係の問題
 
-If you have dependency conflicts:
+依存関係の競合がある場合：
 
 ```bash
 rm -rf node_modules packages/*/node_modules pnpm-lock.yaml
 pnpm install
 ```
 
-### Type Errors
+### 型エラー
 
-Make sure core is built before web:
+アプリを実行する前に、パッケージがビルドされていることを確認：
 
 ```bash
-pnpm --filter @live-editor/core build
-pnpm --filter @live-editor/web build
+pnpm -r build
+pnpm -C apps/web build
 ```
 
-## Next Steps
+## 次のステップ
 
-- Read the [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines
-- Check [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for system design
-- Explore the [packages](./packages/) directory for code examples
+- 開発ガイドラインは [CONTRIBUTING.md](../CONTRIBUTING.md) をご覧ください
+- システム設計は [docs/ARCHITECTURE.md](./ARCHITECTURE.md) をご覧ください
+- [packages](../packages/) ディレクトリでコード例を確認
 
-## Getting Help
+## ヘルプ
 
-- Check the [documentation](./docs/)
-- Review [open issues](https://github.com/pa-y-kunimoto/live-editor/issues)
-- Read [package READMEs](./packages/) for package-specific info
+- [ドキュメント](../docs/) を確認
+- [オープンな Issue](https://github.com/pa-y-kunimoto/live-editor/issues) を確認
+- パッケージ固有の情報は [パッケージ README](../packages/README.md) を参照
 
-## Continuous Integration
+## 継続的インテグレーション
 
-Every PR is automatically checked for:
+すべての PR は自動的に以下がチェックされます：
 
-- ✅ Code formatting (Prettier)
-- ✅ Linting (ESLint)
-- ✅ TypeScript compilation
-- ✅ Tests passing
+- ✅ コードフォーマット（Prettier）
+- ✅ Lint（ESLint）
+- ✅ TypeScript コンパイル
+- ✅ テストの成功
 
-Make sure to run these locally before pushing:
+プッシュ前にローカルでこれらを実行してください：
 
 ```bash
 pnpm format && pnpm lint && pnpm build && pnpm test
 ```
-
-Happy coding! 🚀
