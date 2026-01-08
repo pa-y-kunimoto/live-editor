@@ -1,71 +1,72 @@
 # Live Editor
 
-A block-based Markdown editor with real-time preview, built with Nuxt.js and Vue 3.
+Nuxt.js と Vue 3 で構築された、リアルタイムプレビュー機能を持つブロックベースの Markdown エディタです。
 
-## Demo
+## デモ
 
-![Live Editor Demo](./docs/assets/demo.gif)
+![Live Editor デモ](./docs/assets/demo.gif)
 
-## Overview
+## 概要
 
-Live Editor is a modern, block-based markdown editor that provides an intuitive WYSIWYG-like editing experience while maintaining full markdown compatibility. Each piece of content is treated as an independent "block" that can be edited, moved, and styled individually.
+Live Editor は、直感的な WYSIWYG 風の編集体験を提供しながら、完全な Markdown 互換性を維持するモダンなブロックベースエディタです。各コンテンツは独立した「ブロック」として扱われ、個別に編集、移動、スタイル設定が可能です。
 
-### Key Features
+### 主な機能
 
-- **Block-based Editing** - Content is organized into discrete blocks (headings, paragraphs, lists, code, etc.)
-- **Real-time Preview** - See rendered markdown as you type
-- **Syntax Highlighting** - Code blocks with language-specific highlighting
-- **Link Previews** - OGP metadata display for URLs
-- **Drag & Drop** - Reorder blocks by dragging
-- **Undo/Redo** - Full history support with cursor position restoration
-- **Keyboard Shortcuts** - Efficient navigation and formatting
-- **Checklists** - Interactive task lists with checkbox toggling
-- **Table Generation** - Quick table creation with `/table` command
+- **ブロックベース編集** - コンテンツを独立したブロック（見出し、段落、リスト、コードなど）として管理
+- **リアルタイムプレビュー** - 入力中にレンダリングされた Markdown を即座に表示
+- **構文ハイライト** - 言語別のコードブロックハイライト
+- **リンクプレビュー** - URL の OGP メタデータを表示
+- **ドラッグ＆ドロップ** - ブロックをドラッグして並び替え
+- **Undo/Redo** - カーソル位置の復元を含む完全な履歴サポート
+- **キーボードショートカット** - 効率的なナビゲーションとフォーマット
+- **チェックリスト** - チェックボックスの切り替えが可能なインタラクティブなタスクリスト
+- **テーブル生成** - `/table` コマンドでテーブルを簡単に作成
 
-## Getting Started
+## はじめに
 
-See [docs/QUICKSTART.md](./docs/QUICKSTART.md) for a quick start guide.
+クイックスタートガイドは [docs/QUICKSTART.md](./docs/QUICKSTART.md) をご覧ください。
 
-### Prerequisites
+### 前提条件
 
 - Node.js >= 22.0.0
 - pnpm >= 8.0.0
 
-### Installation
+### インストール
 
 ```bash
 pnpm install
 ```
 
-### Development
+### 開発
 
 ```bash
-# Start the development server
+# 開発サーバーを起動
 pnpm dev
 
-# Run tests
+# テストを実行
 pnpm test
 
-# Run linter
+# Lint を実行
 pnpm lint
 ```
 
-## Documentation
+## ドキュメント
 
-- [Quick Start](./docs/QUICKSTART.md) - Getting started guide
-- [Architecture](./docs/ARCHITECTURE.md) - System architecture and composables
-- [Glossary](./docs/GLOSSARY.md) - Domain terminology (ubiquitous language)
-- [Contributing](./CONTRIBUTING.md) - Development workflow and guidelines
+- [クイックスタート](./docs/QUICKSTART.md) - 導入ガイド
+- [アーキテクチャ](./docs/ARCHITECTURE.md) - システム構成と Composables
+- [用語集](./docs/GLOSSARY.md) - ドメイン用語（ユビキタス言語）
+- [コントリビューティング](./CONTRIBUTING.md) - 開発ワークフローとガイドライン
+- [パッケージ一覧](./packages/README.md) - モノレポパッケージの構成
 
-## Tech Stack
+## 技術スタック
 
-- **Framework:** Nuxt.js 4 / Vue 3
-- **Language:** TypeScript
+- **フレームワーク:** Nuxt.js 4 / Vue 3
+- **言語:** TypeScript
 - **Markdown:** marked
-- **Syntax Highlighting:** highlight.js
-- **Testing:** Vitest + @vue/test-utils
-- **Package Manager:** pnpm (monorepo)
+- **構文ハイライト:** highlight.js
+- **テスト:** Vitest + @vue/test-utils
+- **パッケージマネージャー:** pnpm（モノレポ）
 
-## License
+## ライセンス
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+このプロジェクトは MIT ライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルをご覧ください。

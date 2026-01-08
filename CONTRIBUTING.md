@@ -1,117 +1,117 @@
-# Contributing to live-editor
+# live-editor への貢献
 
-Thank you for your interest in contributing to live-editor! This guide will help you get started.
+live-editor への貢献にご興味をお持ちいただきありがとうございます。このガイドでは、貢献を始めるための手順を説明します。
 
-## 🏗️ Development Setup
+## 開発環境のセットアップ
 
-### Prerequisites
+### 前提条件
 
 - **Node.js** >= 22.0.0
 - **pnpm** >= 8.0.0
 - **Git**
 
-### Initial Setup
+### 初期セットアップ
 
-1. **Fork and clone the repository**
+1. **リポジトリをフォークしてクローン**
 
 ```bash
 git clone https://github.com/your-username/live-editor.git
 cd live-editor
 ```
 
-2. **Install dependencies**
+2. **依存関係をインストール**
 
 ```bash
 pnpm install
 ```
 
-3. **Build all packages**
+3. **全パッケージをビルド**
 
 ```bash
 pnpm build
 ```
 
-## 🔄 Development Workflow
+## 開発ワークフロー
 
-### Creating a Branch
+### ブランチの作成
 
 ```bash
 git checkout -b feature/your-feature-name
-# or
+# または
 git checkout -b fix/your-bug-fix
 ```
 
-### Making Changes
+### 変更を加える
 
-1. **Make your changes** in the appropriate package(s)
-2. **Format your code**
+1. **適切なパッケージで変更を加える**
+2. **コードをフォーマット**
 
 ```bash
 pnpm format
 ```
 
-3. **Run linter**
+3. **Lint を実行**
 
 ```bash
 pnpm lint
 ```
 
-4. **Build the packages**
+4. **パッケージをビルド**
 
 ```bash
 pnpm build
 ```
 
-5. **Run tests**
+5. **テストを実行**
 
 ```bash
 pnpm test
 ```
 
-### Working with Packages
+### パッケージでの作業
 
-#### Working on a specific package
+#### 特定のパッケージで作業する
 
 ```bash
-# Navigate to the package
+# パッケージに移動
 cd packages/core
 
-# Or use pnpm filter from root
+# またはルートから pnpm filter を使用
 pnpm --filter @live-editor/core dev
 ```
 
-#### Adding dependencies
+#### 依存関係の追加
 
 ```bash
-# Add to a specific package
+# 特定のパッケージに追加
 pnpm --filter @live-editor/core add lodash
 
-# Add dev dependency
+# dev 依存関係を追加
 pnpm --filter @live-editor/core add -D @types/lodash
 
-# Add to root (for dev tools)
+# ルートに追加（開発ツール用）
 pnpm add -w -D prettier
 ```
 
-#### Creating a new package
+#### 新しいパッケージの作成
 
-1. Create a new directory under `packages/`
-2. Add a `package.json` with the name `@live-editor/your-package`
-3. Run `pnpm install` to register it in the workspace
+1. `packages/` 配下に新しいディレクトリを作成
+2. `@live-editor/your-package` という名前で `package.json` を追加
+3. `pnpm install` を実行してワークスペースに登録
 
-### Commit Guidelines
+### コミットガイドライン
 
-We follow conventional commits:
+コンベンショナルコミットに従います：
 
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting, etc.)
-- `refactor:` - Code refactoring
-- `test:` - Test changes
-- `chore:` - Build process or auxiliary tool changes
+- `feat:` - 新機能
+- `fix:` - バグ修正
+- `docs:` - ドキュメントの変更
+- `style:` - コードスタイルの変更（フォーマットなど）
+- `refactor:` - コードのリファクタリング
+- `test:` - テストの変更
+- `chore:` - ビルドプロセスや補助ツールの変更
 
-Example:
+例：
 
 ```bash
 git commit -m "feat(core): add field validation utility"
@@ -119,52 +119,52 @@ git commit -m "fix(web): resolve form update race condition"
 git commit -m "docs: update README with examples"
 ```
 
-## 🧪 Testing
+## テスト
 
-### Running Tests
+### テストの実行
 
 ```bash
-# Run all tests
+# 全テストを実行
 pnpm test
 
-# Run tests for a specific package
+# 特定のパッケージのテストを実行
 pnpm --filter @live-editor/core test
 
-# Run tests in watch mode (if configured)
+# ウォッチモードでテストを実行（設定されている場合）
 pnpm --filter @live-editor/core test:watch
 ```
 
-### Writing Tests
+### テストの作成
 
-- Place test files next to the source files or in a `__tests__` directory
-- Use descriptive test names
-- Follow existing test patterns in the codebase
+- テストファイルはソースファイルの隣または `__tests__` ディレクトリに配置
+- わかりやすいテスト名を使用
+- コードベース内の既存のテストパターンに従う
 
-## 🎨 Code Style
+## コードスタイル
 
 ### TypeScript
 
-- Use TypeScript for all new code
-- Define clear interfaces and types
-- Avoid using `any` type when possible
-- Use strict mode
+- すべての新しいコードには TypeScript を使用
+- 明確なインターフェースと型を定義
+- 可能な限り `any` 型の使用を避ける
+- strict モードを使用
 
-### Formatting
+### フォーマット
 
-- We use Prettier for code formatting
-- Run `pnpm format` before committing
-- Configuration is in `.prettierrc.js`
+- コードフォーマットには Prettier を使用
+- コミット前に `pnpm format` を実行
+- 設定は `prettier.config.js` にあります
 
-### Linting
+### Lint
 
-- We use ESLint for code linting
-- Run `pnpm lint` before committing
-- Configuration is in `.eslintrc.js`
+- コードの Lint には ESLint を使用
+- コミット前に `pnpm lint` を実行
+- 設定は `eslint.config.js` にあります
 
-## 📋 Pull Request Process
+## プルリクエストプロセス
 
-1. **Update documentation** if you're changing functionality
-2. **Run all checks locally**:
+1. **機能を変更する場合はドキュメントを更新**
+2. **ローカルですべてのチェックを実行**：
 
 ```bash
 pnpm format
@@ -173,85 +173,85 @@ pnpm build
 pnpm test
 ```
 
-3. **Push your branch** to your fork
+3. **ブランチをフォークにプッシュ**
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
-4. **Create a Pull Request** on GitHub
-5. **Fill out the PR template** with details about your changes
-6. **Wait for CI checks** to pass
-7. **Address review feedback** if any
+4. **GitHub でプルリクエストを作成**
+5. **PR テンプレートに変更の詳細を記入**
+6. **CI チェックが通過するのを待つ**
+7. **レビューフィードバックがあれば対応**
 
-### PR Title Format
+### PR タイトルのフォーマット
 
-Use conventional commit format:
+コンベンショナルコミットフォーマットを使用：
 
 - `feat: add new feature`
 - `fix: resolve bug`
 - `docs: update documentation`
 
-## 🔍 CI/CD Pipeline
+## CI/CD パイプライン
 
-Our CI pipeline runs on every pull request:
+CI パイプラインはすべてのプルリクエストで実行されます：
 
-- **Formatting Check** - Ensures code is properly formatted
-- **Linting** - Checks for code quality issues
-- **Build** - Compiles all TypeScript packages
-- **Tests** - Runs the test suite
+- **フォーマットチェック** - コードが適切にフォーマットされていることを確認
+- **Lint** - コード品質の問題をチェック
+- **ビルド** - すべての TypeScript パッケージをコンパイル
+- **テスト** - テストスイートを実行
 
-All checks must pass before a PR can be merged.
+PR をマージする前に、すべてのチェックが通過する必要があります。
 
-## 📝 Documentation
+## ドキュメント
 
-- Keep README files up to date in each package
-- Document public APIs with JSDoc comments
-- Update architecture docs when making structural changes
-- Add inline comments for complex logic
+- 各パッケージの README ファイルを最新の状態に保つ
+- パブリック API を JSDoc コメントで文書化
+- 構造的な変更を行った場合はアーキテクチャドキュメントを更新
+- 複雑なロジックにはインラインコメントを追加
 
-## 💡 Best Practices
+## ベストプラクティス
 
-### Monorepo Guidelines
+### モノレポガイドライン
 
-- **Keep packages focused** - Each package should have a single responsibility
-- **Use workspace dependencies** - Reference internal packages with `workspace:*`
-- **Avoid circular dependencies** - Keep dependency graph acyclic
-- **Share common config** - Use root configs for shared tooling
+- **パッケージは集中させる** - 各パッケージは単一の責任を持つべき
+- **ワークスペース依存関係を使用** - 内部パッケージは `workspace:*` で参照
+- **循環依存を避ける** - 依存関係グラフを非循環に保つ
+- **共通設定を共有** - 共有ツールにはルート設定を使用
 
-### Code Guidelines
+### コードガイドライン
 
-- **Write self-documenting code** - Use clear variable and function names
-- **Keep functions small** - Each function should do one thing well
-- **Use TypeScript effectively** - Leverage the type system for safety
-- **Handle errors gracefully** - Always consider error cases
+- **自己文書化コードを書く** - 明確な変数名と関数名を使用
+- **関数を小さく保つ** - 各関数は一つのことをうまく行う
+- **TypeScript を効果的に使用** - 安全性のために型システムを活用
+- **エラーを適切に処理** - 常にエラーケースを考慮
 
-### Performance
+### パフォーマンス
 
-- **Minimize dependencies** - Only add necessary dependencies
-- **Optimize builds** - Keep build times reasonable
-- **Cache appropriately** - Use caching where beneficial
+- **依存関係を最小限に** - 必要な依存関係のみ追加
+- **ビルドを最適化** - ビルド時間を合理的に保つ
+- **適切にキャッシュ** - 有益な場所でキャッシュを使用
 
-## 🐛 Reporting Issues
+## Issue の報告
 
-When reporting issues:
+Issue を報告する際：
 
-1. **Check existing issues** first
-2. **Use the issue template** if available
-3. **Provide reproduction steps**
-4. **Include environment details** (Node version, OS, etc.)
-5. **Add relevant code snippets** or error messages
+1. **既存の Issue を先に確認**
+2. **利用可能な場合は Issue テンプレートを使用**
+3. **再現手順を提供**
+4. **環境の詳細を含める**（Node バージョン、OS など）
+5. **関連するコードスニペット** やエラーメッセージを追加
 
-## 💬 Getting Help
+## ヘルプを得る
 
-- **Documentation** - Check docs/ directory
-- **Issues** - Search or create GitHub issues
-- **Discussions** - Use GitHub Discussions for questions
+- **ドキュメント** - docs/ ディレクトリを確認
+- **Issues** - GitHub Issues を検索または作成
+- **Discussions** - 質問には GitHub Discussions を使用
 
-## 📜 Code of Conduct
+## 行動規範
 
-- Be respectful and inclusive
-- Focus on constructive feedback
-- Help create a welcoming environment
+- 敬意を持ち、包括的であること
+- 建設的なフィードバックに集中
+- 歓迎される環境の創出に協力
 
-Thank you for contributing to live-editor! 🎉
+live-editor への貢献ありがとうございます！

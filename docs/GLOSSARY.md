@@ -1,98 +1,98 @@
-# Ubiquitous Language / Glossary
+# ユビキタス言語 / 用語集
 
-This document defines the domain-specific terminology used throughout the Live Editor project. All team members should use these terms consistently in code, documentation, and communication.
+このドキュメントでは、Live Editor プロジェクト全体で使用されるドメイン固有の用語を定義します。チームメンバー全員がコード、ドキュメント、コミュニケーションにおいてこれらの用語を一貫して使用してください。
 
-## Core Concepts
+## コアコンセプト
 
-### Block
+### Block（ブロック）
 
-A **Block** is the fundamental unit of content in the editor. Each block represents a single logical piece of markdown content that can be edited, rendered, and manipulated independently.
+**Block** はエディタにおけるコンテンツの基本単位です。各ブロックは、独立して編集、レンダリング、操作できる単一の論理的な Markdown コンテンツを表します。
 
 ```typescript
 interface Block {
-  id: string; // Unique identifier (e.g., "block-0", "block-1")
-  content: string; // Raw markdown content of the block
+  id: string; // 一意の識別子（例: "block-0", "block-1"）
+  content: string; // ブロックの生の Markdown コンテンツ
 }
 ```
 
-**Usage in code:** `useMarkdownBlocks`, `Block`, `blocks`
+**コードでの使用:** `useMarkdownBlocks`, `Block`, `blocks`
 
-### Block Type
+### Block Type（ブロックタイプ）
 
-A **Block Type** categorizes a block based on its markdown content. The editor uses block types to determine how to render and interact with each block.
+**Block Type** は、Markdown コンテンツに基づいてブロックを分類します。エディタはブロックタイプを使用して、各ブロックのレンダリング方法とインタラクション方法を決定します。
 
-| Type            | Description       | Markdown Pattern             |
+| タイプ           | 説明               | Markdown パターン            |
 | --------------- | ----------------- | ---------------------------- |
-| `heading-1`     | Level 1 heading   | `# Title`                    |
-| `heading-2`     | Level 2 heading   | `## Subtitle`                |
-| `heading-3`     | Level 3 heading   | `### Section`                |
-| `code-block`    | Fenced code block | ` ```lang ... ``` `          |
-| `checklist`     | Task list items   | `- [ ] Task` or `- [x] Done` |
-| `bullet-list`   | Unordered list    | `- Item` or `* Item`         |
-| `numbered-list` | Ordered list      | `1. Item`                    |
-| `blockquote`    | Quote block       | `> Quote`                    |
-| `table`         | Markdown table    | `\| A \| B \|`               |
-| `empty`         | Empty line        | (blank)                      |
-| `paragraph`     | Regular text      | Any other content            |
+| `heading-1`     | レベル 1 見出し    | `# Title`                    |
+| `heading-2`     | レベル 2 見出し    | `## Subtitle`                |
+| `heading-3`     | レベル 3 見出し    | `### Section`                |
+| `code-block`    | フェンス付きコードブロック | ` ```lang ... ``` `    |
+| `checklist`     | タスクリスト項目   | `- [ ] Task` または `- [x] Done` |
+| `bullet-list`   | 箇条書きリスト     | `- Item` または `* Item`     |
+| `numbered-list` | 番号付きリスト     | `1. Item`                    |
+| `blockquote`    | 引用ブロック       | `> Quote`                    |
+| `table`         | Markdown テーブル  | `\| A \| B \|`               |
+| `empty`         | 空行              | （空白）                      |
+| `paragraph`     | 通常のテキスト     | その他のコンテンツ            |
 
-**Usage in code:** `BlockType`, `getBlockType()`
+**コードでの使用:** `BlockType`, `getBlockType()`
 
-### Section
+### Section（セクション）
 
-A **Section** is a hierarchical grouping of blocks that starts with a heading and includes all subsequent blocks until the next heading of equal or higher level. Sections are used for operations like "copy section".
+**Section** は、見出しで始まり、同等以上のレベルの次の見出しまでの後続のすべてのブロックを含む、ブロックの階層的なグループです。セクションは「セクションをコピー」などの操作に使用されます。
 
-**Example:**
+**例：**
 
 ```markdown
-# Section 1 <- Section includes this heading and...
+# Section 1 <- このセクションはこの見出しと...
 
-Paragraph text <- ...this paragraph
+Paragraph text <- ...この段落を含み
 
-## Subsection <- ...and this subsection
+## Subsection <- ...このサブセクションと
 
-More content <- ...and this content
+More content <- ...このコンテンツを含む
 
-# Section 2 <- This starts a new section
+# Section 2 <- これは新しいセクションの開始
 ```
 
-**Usage in code:** `getSectionBlockIds()`
+**コードでの使用:** `getSectionBlockIds()`
 
-## Editor Operations
+## エディタ操作
 
-### Editing State
+### Editing State（編集状態）
 
-The **Editing State** tracks which block is currently being edited by the user. Only one block can be in editing mode at a time.
+**Editing State** は、ユーザーが現在編集しているブロックを追跡します。一度に編集モードにできるブロックは 1 つだけです。
 
-- `editingBlockIndex` - The index of the block currently being edited (null if none)
-- `editingBlockId` - The ID of the block currently being edited
+- `editingBlockIndex` - 現在編集中のブロックのインデックス（なければ null）
+- `editingBlockId` - 現在編集中のブロックの ID
 
-**Usage in code:** `useBlockEditor`, `editingBlockIndex`, `editingBlockId`
+**コードでの使用:** `useBlockEditor`, `editingBlockIndex`, `editingBlockId`
 
-### Hover State
+### Hover State（ホバー状態）
 
-The **Hover State** tracks which block the user is hovering over, used for displaying contextual UI elements like copy buttons and drag handles.
+**Hover State** は、ユーザーがホバーしているブロックを追跡し、コピーボタンやドラッグハンドルなどのコンテキスト UI 要素を表示するために使用されます。
 
-- `hoveredBlockId` - The ID of the block being hovered
-- `hoveredCopyBlockId` - The ID for showing section copy UI
+- `hoveredBlockId` - ホバー中のブロックの ID
+- `hoveredCopyBlockId` - セクションコピー UI を表示するための ID
 
-**Usage in code:** `hoveredBlockId`, `hoveredCopyBlockId`
+**コードでの使用:** `hoveredBlockId`, `hoveredCopyBlockId`
 
-### Block Rendering
+### Block Rendering（ブロックレンダリング）
 
-**Block Rendering** is the process of converting raw markdown content into HTML for display. This includes:
+**Block Rendering** は、生の Markdown コンテンツを表示用の HTML に変換するプロセスです。これには以下が含まれます：
 
-1. Syntax highlighting for code blocks
-2. Checklist item rendering with checkboxes
-3. Standard markdown parsing (headings, lists, links, etc.)
-4. Link preview card generation
+1. コードブロックの構文ハイライト
+2. チェックボックス付きチェックリスト項目のレンダリング
+3. 標準 Markdown 解析（見出し、リスト、リンクなど）
+4. リンクプレビューカードの生成
 
-**Usage in code:** `useMarkdownRenderer`, `renderBlock()`, `getRenderedBlock()`
+**コードでの使用:** `useMarkdownRenderer`, `renderBlock()`, `getRenderedBlock()`
 
-## Link Preview
+## リンクプレビュー
 
-### Link Preview
+### Link Preview（リンクプレビュー）
 
-A **Link Preview** is an enhanced display for URL links, showing OGP (Open Graph Protocol) metadata such as title, description, image, and favicon.
+**Link Preview** は、URL リンクの拡張表示で、タイトル、説明、画像、favicon などの OGP（Open Graph Protocol）メタデータを表示します。
 
 ```typescript
 interface LinkPreview {
@@ -105,23 +105,23 @@ interface LinkPreview {
 }
 ```
 
-**Usage in code:** `useLinkPreview`, `LinkPreview`, `linkPreviews`
+**コードでの使用:** `useLinkPreview`, `LinkPreview`, `linkPreviews`
 
-### Loading State
+### Loading State（読み込み状態）
 
-The **Loading State** for link previews tracks which URLs are currently being fetched for their metadata.
+リンクプレビューの **Loading State** は、メタデータを取得中の URL を追跡します。
 
-**Usage in code:** `loadingUrls`
+**コードでの使用:** `loadingUrls`
 
-## History & Undo/Redo
+## 履歴と Undo/Redo
 
-### Editor History
+### Editor History（エディタ履歴）
 
-**Editor History** is the undo/redo system that tracks content changes over time. Each history state captures:
+**Editor History** は、時間の経過に伴うコンテンツの変更を追跡する Undo/Redo システムです。各履歴状態は以下をキャプチャします：
 
-- The full markdown content
-- Which block was being edited
-- The cursor position
+- 完全な Markdown コンテンツ
+- 編集中だったブロック
+- カーソル位置
 
 ```typescript
 interface HistoryState {
@@ -131,113 +131,113 @@ interface HistoryState {
 }
 ```
 
-**Usage in code:** `useEditorHistory`, `history`, `historyIndex`
+**コードでの使用:** `useEditorHistory`, `history`, `historyIndex`
 
-### Undo/Redo Operations
+### Undo/Redo 操作
 
-- **Undo** - Restores the previous state from history
-- **Redo** - Restores the next state from history (after an undo)
+- **Undo（元に戻す）** - 履歴から前の状態を復元
+- **Redo（やり直し）** - 履歴から次の状態を復元（Undo 後）
 
-**Usage in code:** `undo()`, `redo()`, `isUndoRedo`
+**コードでの使用:** `undo()`, `redo()`, `isUndoRedo`
 
-## Formatting
+## フォーマット
 
-### Format Toolbar
+### Format Toolbar（フォーマットツールバー）
 
-The **Format Toolbar** provides quick access to text formatting commands. Available formats:
+**Format Toolbar** はテキストフォーマットコマンドへのクイックアクセスを提供します。利用可能なフォーマット：
 
-| Format          | Description   | Markdown      |
-| --------------- | ------------- | ------------- |
-| `bold`          | Bold text     | `**text**`    |
-| `italic`        | Italic text   | `*text*`      |
-| `strikethrough` | Strikethrough | `~~text~~`    |
-| `code`          | Inline code   | `` `code` ``  |
-| `link`          | Hyperlink     | `[text](url)` |
-| `h1`            | Heading 1     | `# `          |
-| `h2`            | Heading 2     | `## `         |
-| `h3`            | Heading 3     | `### `        |
-| `bullet`        | Bullet list   | `- `          |
-| `numbered`      | Numbered list | `1. `         |
-| `checklist`     | Checklist     | `- [ ] `      |
-| `quote`         | Blockquote    | `> `          |
+| フォーマット     | 説明           | Markdown       |
+| --------------- | ------------- | -------------- |
+| `bold`          | 太字テキスト   | `**text**`     |
+| `italic`        | 斜体テキスト   | `*text*`       |
+| `strikethrough` | 取り消し線     | `~~text~~`     |
+| `code`          | インラインコード | `` `code` ``  |
+| `link`          | ハイパーリンク | `[text](url)`  |
+| `h1`            | 見出し 1       | `# `           |
+| `h2`            | 見出し 2       | `## `          |
+| `h3`            | 見出し 3       | `### `         |
+| `bullet`        | 箇条書きリスト | `- `           |
+| `numbered`      | 番号付きリスト | `1. `          |
+| `checklist`     | チェックリスト | `- [ ] `       |
+| `quote`         | 引用           | `> `           |
 
-**Usage in code:** `useFormatToolbar`, `FormatType`, `applyFormat()`
+**コードでの使用:** `useFormatToolbar`, `FormatType`, `applyFormat()`
 
-## Drag and Drop
+## ドラッグ＆ドロップ
 
-### Block Reordering
+### Block Reordering（ブロック並べ替え）
 
-**Block Reordering** allows users to change the order of blocks by dragging and dropping. The drag handle is visible on hover.
+**Block Reordering** は、ドラッグ＆ドロップでブロックの順序を変更できます。ドラッグハンドルはホバー時に表示されます。
 
-- `draggedBlockIndex` - Index of the block being dragged
-- `dragOverBlockIndex` - Index of the block being dragged over (drop target)
+- `draggedBlockIndex` - ドラッグ中のブロックのインデックス
+- `dragOverBlockIndex` - ドラッグオーバー中のブロックのインデックス（ドロップ先）
 
-**Usage in code:** `handleDragStart()`, `handleDragOver()`, `handleDrop()`, `handleDragEnd()`
+**コードでの使用:** `handleDragStart()`, `handleDragOver()`, `handleDrop()`, `handleDragEnd()`
 
-## Keyboard Handling
+## キーボード処理
 
-### Keyboard Shortcuts
+### Keyboard Shortcuts（キーボードショートカット）
 
-**Keyboard Shortcuts** provide efficient navigation and editing. Key handlers include:
+**Keyboard Shortcuts** は効率的なナビゲーションと編集を提供します。キーハンドラには以下が含まれます：
 
-| Action     | Shortcut           | Description                           |
-| ---------- | ------------------ | ------------------------------------- |
-| Enter      | `Enter`            | Split block or create new block       |
-| Backspace  | `Backspace`        | Merge with previous block if at start |
-| Tab        | `Tab`              | Indent list item                      |
-| Shift+Tab  | `Shift+Tab`        | Outdent list item                     |
-| Arrow Up   | `ArrowUp`          | Navigate to previous block            |
-| Arrow Down | `ArrowDown`        | Navigate to next block                |
-| Undo       | `Cmd/Ctrl+Z`       | Undo last change                      |
-| Redo       | `Cmd/Ctrl+Shift+Z` | Redo last undone change               |
+| アクション     | ショートカット      | 説明                              |
+| ------------- | ------------------ | --------------------------------- |
+| Enter         | `Enter`            | ブロックを分割または新規ブロック作成 |
+| Backspace     | `Backspace`        | 先頭で前のブロックと結合           |
+| Tab           | `Tab`              | リスト項目をインデント             |
+| Shift+Tab     | `Shift+Tab`        | リスト項目をアウトデント           |
+| Arrow Up      | `ArrowUp`          | 前のブロックに移動                |
+| Arrow Down    | `ArrowDown`        | 次のブロックに移動                |
+| Undo          | `Cmd/Ctrl+Z`       | 最後の変更を元に戻す              |
+| Redo          | `Cmd/Ctrl+Shift+Z` | 最後に元に戻した変更をやり直す     |
 
-**Usage in code:** `useKeyboardHandler`
+**コードでの使用:** `useKeyboardHandler`
 
-## Document Operations
+## ドキュメント操作
 
-### Document
+### Document（ドキュメント）
 
-A **Document** represents the complete markdown content being edited. The document is stored as a single string and parsed into blocks for editing.
+**Document** は編集中の完全な Markdown コンテンツを表します。ドキュメントは単一の文字列として保存され、編集用にブロックに解析されます。
 
-**Usage in code:** `useMarkdownDocument`, `markdownContent`
+**コードでの使用:** `useMarkdownDocument`, `markdownContent`
 
-### Copy to Clipboard
+### Copy to Clipboard（クリップボードにコピー）
 
-**Copy to Clipboard** exports the current document content to the system clipboard, with proper markdown formatting preserved.
+**Copy to Clipboard** は、現在のドキュメントコンテンツを適切な Markdown フォーマットを保持したままシステムクリップボードにエクスポートします。
 
-**Usage in code:** `copyToClipboard()`, `formatMarkdownForCopy()`
+**コードでの使用:** `copyToClipboard()`, `formatMarkdownForCopy()`
 
-## Table Generation
+## テーブル生成
 
-### Table Generator
+### Table Generator（テーブルジェネレーター）
 
-The **Table Generator** creates markdown tables from a simple command syntax.
+**Table Generator** はシンプルなコマンド構文から Markdown テーブルを作成します。
 
-**Command format:** `/table <rows> <cols>`
+**コマンド形式:** `/table <行数> <列数>`
 
-**Example:** `/table 3 4` creates a 3-row, 4-column table
+**例:** `/table 3 4` は 3 行 4 列のテーブルを作成
 
-**Usage in code:** `useTableGenerator`, `parseTableCommand()`, `generateTableMarkdown()`
+**コードでの使用:** `useTableGenerator`, `parseTableCommand()`, `generateTableMarkdown()`
 
-## Code Highlighting
+## コードハイライト
 
-### Syntax Highlighting
+### Syntax Highlighting（構文ハイライト）
 
-**Syntax Highlighting** uses highlight.js to colorize code blocks based on the specified programming language.
+**Syntax Highlighting** は highlight.js を使用して、指定されたプログラミング言語に基づいてコードブロックを色付けします。
 
-**Usage in code:** `useHighlight`, `highlightCode()`
+**コードでの使用:** `useHighlight`, `highlightCode()`
 
-## Composables Summary
+## Composables サマリー
 
-| Composable            | Purpose                                            |
+| Composable             | 目的                                               |
 | --------------------- | -------------------------------------------------- |
-| `useMarkdownBlocks`   | Parses content into blocks, determines block types |
-| `useMarkdownRenderer` | Renders blocks to HTML, handles previews           |
-| `useBlockEditor`      | Manages editing state, handles user interactions   |
-| `useLinkPreview`      | Fetches and manages link preview data              |
-| `useEditorHistory`    | Tracks content history for undo/redo               |
-| `useFormatToolbar`    | Applies text formatting                            |
-| `useKeyboardHandler`  | Handles keyboard shortcuts and navigation          |
-| `useTableGenerator`   | Generates markdown tables                          |
-| `useHighlight`        | Provides syntax highlighting                       |
-| `useMarkdownDocument` | Manages document loading and copying               |
+| `useMarkdownBlocks`   | コンテンツをブロックに解析、ブロックタイプを決定      |
+| `useMarkdownRenderer` | ブロックを HTML にレンダリング、プレビューを処理     |
+| `useBlockEditor`      | 編集状態を管理、ユーザーインタラクションを処理        |
+| `useLinkPreview`      | リンクプレビューデータを取得・管理                   |
+| `useEditorHistory`    | Undo/Redo のためのコンテンツ履歴を追跡              |
+| `useFormatToolbar`    | テキストフォーマットを適用                          |
+| `useKeyboardHandler`  | キーボードショートカットとナビゲーションを処理        |
+| `useTableGenerator`   | Markdown テーブルを生成                            |
+| `useHighlight`        | 構文ハイライトを提供                               |
+| `useMarkdownDocument` | ドキュメントの読み込みとコピーを管理                 |
