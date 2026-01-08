@@ -71,14 +71,22 @@ export function useBlockEditor(
   }
 
   function stopEditing() {
-    if (ignoreBlur.value) {
-      return;
-    }
+    // Escapeキーなどで明示的に呼ばれた場合は、ignoreBlurをリセットして編集を終了する
+    ignoreBlur.value = false;
+    editingBlockIndex.value = null;
   }
 
   function updateBlock(blockId: string, newContent: string) {
-    const blockIndex = blocks.value.findIndex((b: Block) => b.id === blockId);
-    if (blockIndex === -1) return;
+    // 編集中の場合はインデックスを使用（ブロックIDは再パース時に変わるため）
+    // 編集中でない場合（チェックボックストグルなど）はブロックIDで検索
+    let blockIndex: number;
+    if (editingBlockIndex.value !== null) {
+      blockIndex = editingBlockIndex.value;
+    } else {
+      blockIndex = blocks.value.findIndex((b: Block) => b.id === blockId);
+    }
+
+    if (blockIndex < 0 || blockIndex >= blocks.value.length) return;
 
     const newBlocks = blocks.value.map((b: Block, i: number) =>
       i === blockIndex ? { ...b, content: newContent } : b
