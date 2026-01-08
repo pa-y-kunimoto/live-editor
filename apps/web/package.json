@@ -14,6 +14,14 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@live-editor/code-block": "workspace:*",
+    "@live-editor/core": "workspace:*",
+    "@live-editor/document": "workspace:*",
+    "@live-editor/history": "workspace:*",
+    "@live-editor/link": "workspace:*",
+    "@live-editor/list": "workspace:*",
+    "@live-editor/quote": "workspace:*",
+    "@live-editor/table": "workspace:*",
     "highlight.js": "^11.11.1",
     "marked": "^15.0.12",
     "marked-highlight": "^2.2.1",

@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useMarkdownDocument } from '../composables'
+import { useMarkdownDocument } from '@live-editor/document'
 
 const {
   markdownContent,
   showCopyNotification,
-  loadDefaultContent,
+  setContent,
   copyToClipboard
 } = useMarkdownDocument()
 
 // 初期コンテンツを読み込む
-onBeforeMount(() => {
-  loadDefaultContent()
+onBeforeMount(async () => {
+  const content = await $fetch<string>('/default-content.md')
+  setContent(content)
 })
 </script>
 

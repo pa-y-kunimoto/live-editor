@@ -1,7 +1,6 @@
 {
-  "name": "@live-editor/core",
+  "name": "@live-editor/history",
   "version": "0.1.0",
-  "description": "Core types and block parsing for live-editor",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -16,25 +15,19 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite build --watch",
     "build": "vite build",
     "test": "vitest",
     "test:run": "vitest run",
-    "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "@types/node": "^22.19.3",
-    "@vitejs/plugin-vue": "^6.0.3",
-    "@vue/test-utils": "^2.4.6",
-    "happy-dom": "^20.0.11",
-    "typescript": "^5.9.3",
+    "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.16",
-    "vue": "^3.5.26"
+    "vitest": "^3.2.3",
+    "vue": "^3.5.17"
   }
 }

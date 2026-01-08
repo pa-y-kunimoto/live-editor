@@ -73,7 +73,7 @@ pnpm test
 Test a specific package:
 
 ```bash
-pnpm --filter @live-editor/web test
+pnpm --filter @live-editor/composables test
 ```
 
 ### Linting
@@ -110,9 +110,11 @@ pnpm clean
 
 ```
 live-editor/
+├── apps/
+│   └── web/           # Nuxt.js web application
 ├── packages/
 │   ├── core/          # @live-editor/core - Core utilities
-│   └── web/           # @live-editor/web - Web application
+│   └── composables/   # @live-editor/composables - Vue 3 composables
 ├── docs/              # Documentation
 ├── .github/           # GitHub Actions workflows
 └── ...config files
@@ -135,14 +137,14 @@ live-editor/
 Use the `--filter` flag to run commands on specific packages:
 
 ```bash
-# Install a dependency to core package
-pnpm --filter @live-editor/core add lodash
+# Install a dependency to composables package
+pnpm --filter @live-editor/composables add lodash
 
-# Run dev mode for web package only
-pnpm --filter @live-editor/web dev
+# Run dev mode for web app only
+pnpm -C apps/web dev
 
-# Build core package only
-pnpm --filter @live-editor/core build
+# Build composables package only
+pnpm --filter @live-editor/composables build
 ```
 
 ## Troubleshooting
@@ -168,11 +170,11 @@ pnpm install
 
 ### Type Errors
 
-Make sure core is built before web:
+Make sure composables are built before running the app:
 
 ```bash
-pnpm --filter @live-editor/core build
-pnpm --filter @live-editor/web build
+pnpm --filter @live-editor/composables build
+pnpm -C apps/web build
 ```
 
 ## Next Steps

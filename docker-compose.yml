@@ -1,0 +1,41 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+    restart: unless-stopped
+
+  # Development mode with hot reload
+  web-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/packages/core/node_modules
+      - /app/packages/code-block/node_modules
+      - /app/packages/list/node_modules
+      - /app/packages/table/node_modules
+      - /app/packages/quote/node_modules
+      - /app/packages/link/node_modules
+      - /app/packages/history/node_modules
+      - /app/packages/document/node_modules
+      - /app/apps/web/node_modules
+    working_dir: /app
+    command: pnpm dev
+    profiles:
+      - dev

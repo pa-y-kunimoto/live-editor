@@ -15,17 +15,6 @@ live-editor/
 │   └── web/                    # Nuxt.js web application
 │       ├── components/         # Vue components
 │       │   └── MarkdownEditor.vue
-│       ├── composables/        # Vue composables (business logic)
-│       │   ├── useMarkdownBlocks.ts
-│       │   ├── useMarkdownRenderer.ts
-│       │   ├── useBlockEditor.ts
-│       │   ├── useLinkPreview.ts
-│       │   ├── useEditorHistory.ts
-│       │   ├── useFormatToolbar.ts
-│       │   ├── useKeyboardHandler.ts
-│       │   ├── useTableGenerator.ts
-│       │   ├── useHighlight.ts
-│       │   └── useMarkdownDocument.ts
 │       ├── pages/              # Nuxt pages
 │       ├── server/             # Server API routes
 │       │   └── api/
@@ -38,12 +27,23 @@ live-editor/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   └── README.md
-│   └── web/                    # Web package
+│   └── composables/            # Vue 3 composables (business logic)
 │       ├── src/
-│       │   └── index.ts       # LiveEditor class
+│       │   ├── useMarkdownBlocks.ts
+│       │   ├── useMarkdownRenderer.ts
+│       │   ├── useBlockEditor.ts
+│       │   ├── useLinkPreview.ts
+│       │   ├── useEditorHistory.ts
+│       │   ├── useFormatToolbar.ts
+│       │   ├── useKeyboardHandler.ts
+│       │   ├── useTableGenerator.ts
+│       │   ├── useHighlight.ts
+│       │   ├── useMarkdownDocument.ts
+│       │   └── index.ts        # Export all composables
+│       ├── __tests__/          # Unit and integration tests
 │       ├── package.json
 │       ├── tsconfig.json
-│       └── README.md
+│       └── vite.config.ts
 ├── docs/
 │   ├── ARCHITECTURE.md        # This file
 │   ├── GLOSSARY.md            # Ubiquitous language definitions
@@ -197,22 +197,37 @@ export function validateField(field: FormField): boolean
 export function validateForm(formData: FormData): boolean
 ```
 
-### @live-editor/web
+### @live-editor/composables
 
-**Purpose**: Web package for form editing utilities
+**Purpose**: Reusable Vue 3 composables for the Markdown editor
 
 **Key Components**:
 
-- `LiveEditor` class - Main editor instance managing form state
-- `addField()` - Adds a new field to the form
-- `removeField()` - Removes a field by ID
-- `updateField()` - Updates field value with timestamp
-- `validate()` - Validates current form state
-- `getFormData()` - Returns immutable snapshot of form data
+- Markdown parsing and block management
+- HTML rendering with syntax highlighting
+- Editor state management (editing, history, undo/redo)
+- Keyboard shortcuts and text formatting
+- Link preview fetching
+- Table generation
 
 **Dependencies**:
 
-- `@live-editor/core` (workspace dependency)
+- `vue` (peer dependency)
+- `highlight.js` - Syntax highlighting
+- `marked` - Markdown parsing
+- `marked-highlight` - Markdown + highlight.js integration
+
+**Usage**:
+
+```typescript
+import {
+  useMarkdownBlocks,
+  useMarkdownRenderer,
+  useBlockEditor,
+  useEditorHistory,
+  type Block,
+} from '@live-editor/composables';
+```
 
 ## Design Principles
 
@@ -260,23 +275,23 @@ Each composable has a clear, focused purpose:
                     │
                     ▼
 ┌─────────────────────────────────────────────────┐
-│            LiveEditor (web package)              │
-│  • Manages form state                           │
-│  • Handles CRUD operations                      │
-│  • Updates timestamps                           │
+│          apps/web (Nuxt Application)             │
+│  • MarkdownEditor.vue component                 │
+│  • Server API for OGP fetching                  │
 └───────────────────┬─────────────────────────────┘
                     │
                     ▼
 ┌─────────────────────────────────────────────────┐
-│         Validation (core package)                │
-│  • validateField()                              │
-│  • validateForm()                               │
-│  • Returns boolean result                       │
+│      @live-editor/composables (package)          │
+│  • useMarkdownBlocks - Parse content            │
+│  • useMarkdownRenderer - Render HTML            │
+│  • useBlockEditor - Edit state                  │
+│  • useEditorHistory - Undo/redo                 │
 └───────────────────┬─────────────────────────────┘
                     │
                     ▼
 ┌─────────────────────────────────────────────────┐
-│              User Feedback                       │
+│              Rendered Output                     │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -356,17 +371,14 @@ The project has comprehensive test coverage with 160+ tests using Vitest.
 ### Test Structure
 
 ```
-apps/web/
-├── components/__tests__/
-│   └── MarkdownEditor.integration.test.ts  # Component tests
-└── composables/__tests__/
-    ├── useMarkdownBlocks.test.ts           # 32 tests
-    ├── useMarkdownRenderer.test.ts         # 23 tests
-    ├── useEditorHistory.test.ts            # 13 tests
-    ├── useFormatToolbar.test.ts            # 27 tests
-    ├── useTableGenerator.test.ts           # 19 tests
-    ├── useMarkdownDocument.test.ts         # 21 tests
-    └── integration.test.ts                 # 10 tests
+packages/composables/src/__tests__/
+├── useMarkdownBlocks.test.ts           # 32 tests
+├── useMarkdownRenderer.test.ts         # 23 tests
+├── useEditorHistory.test.ts            # 13 tests
+├── useFormatToolbar.test.ts            # 27 tests
+├── useTableGenerator.test.ts           # 19 tests
+├── useMarkdownDocument.test.ts         # 20 tests
+└── integration.test.ts                 # 10 tests
 ```
 
 ### Testing Tools
