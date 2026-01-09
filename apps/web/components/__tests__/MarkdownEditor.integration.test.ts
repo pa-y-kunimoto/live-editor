@@ -224,6 +224,9 @@ code
       const initialCount = initialBlocks.length;
 
       // Click first block
+      if (initialBlocks[0] === undefined) {
+        throw new Error('No blocks found');
+      }
       await initialBlocks[0].trigger('click');
       await nextTick();
 
